@@ -47,6 +47,31 @@ dump_stmt (dump_info_p di, const_tree t)
     dump_int (di, "line", EXPR_LINENO (t));
 }
 
+#if __EMX__ /* bird hacking */
+static void cp_dump_attributes (dump_info_p di, tree t)
+{
+  tree attr = NULL;
+  if (DECL_P (t))
+    attr = DECL_ATTRIBUTES (t);
+  else if (TYPE_P (t))
+    attr = TYPE_ATTRIBUTES (t);
+  else
+    return;
+  if (lookup_attribute ("optlink", attr))
+    dump_string (di, "optlink");
+  if (lookup_attribute ("stdcall", attr))
+    dump_string (di, "stdcall");
+  if (lookup_attribute ("cdecl", attr))
+    dump_string (di, "cdecl");
+  if (lookup_attribute ("system", attr))
+    dump_string (di, "system");
+  if (lookup_attribute ("dllexport", attr))
+    dump_string (di, "dllexport");
+  if (lookup_attribute ("dllimport", attr))
+    dump_string (di, "dllimport");
+}
+#endif /* bird hacking */
+
 bool
 cp_dump_tree (void* dump_info, tree t)
 {
@@ -61,6 +86,10 @@ cp_dump_tree (void* dump_info, tree t)
       if (DECL_LANG_SPECIFIC (t) && DECL_LANGUAGE (t) != lang_cplusplus)
 	dump_string_field (di, "lang", language_to_string (DECL_LANGUAGE (t)));
     }
+
+#if __EMX__ /* bird hacking */
+  cp_dump_attributes (di, t);
+#endif
 
   switch (code)
     {

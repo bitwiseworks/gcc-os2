@@ -37,7 +37,7 @@
 #include <parallel/types.h>
 #include <parallel/base.h>
 
-#if !defined(_WIN32) || defined (__CYGWIN__)
+#if (!defined(_WIN32) && !defined(__OS2__)) || defined (__CYGWIN__)
 #include <sched.h>
 #endif
 
@@ -122,6 +122,9 @@ namespace __gnu_parallel
   {
 #if defined (_WIN32) && !defined (__CYGWIN__)
     Sleep(0);
+#elif defined (__OS2__)
+    unsigned long _System DosSleep (unsigned long ulInterval);
+    DosSleep(0);
 #else
     sched_yield();
 #endif

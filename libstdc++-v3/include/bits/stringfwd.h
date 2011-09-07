@@ -81,6 +81,8 @@ _GLIBCXX_END_NAMESPACE_CXX11
 #ifdef _GLIBCXX_USE_WCHAR_T
   /// A string of @c wchar_t
   typedef basic_string<wchar_t> wstring;   
+#elif defined(__OS2__)
+  typedef basic_string<wchar_t> wstring;
 #endif
 
 #ifdef _GLIBCXX_USE_CHAR8_T

@@ -35,6 +35,8 @@
 # undef CROSS_INCLUDE_DIR
 #endif
 
+/* GCC-OS2: Added a few more configuration options so we can automagically
+   rewrite /gcc/ to whereever we're installed for all of the dirs we use. */
 const struct default_include cpp_include_defaults[]
 #ifdef INCLUDE_DEFAULTS
 = INCLUDE_DEFAULTS;
@@ -61,11 +63,11 @@ const struct default_include cpp_include_defaults[]
 #endif
 #ifdef LOCAL_INCLUDE_DIR
     /* /usr/local/include comes before the fixincluded header files.  */
-    { LOCAL_INCLUDE_DIR, 0, 0, 1, 1, 2 },
-    { LOCAL_INCLUDE_DIR, 0, 0, 1, 1, 0 },
+    { LOCAL_INCLUDE_DIR, LOCAL_INCLUDE_COMPONENT, 0, 1, 1, 2 },
+    { LOCAL_INCLUDE_DIR, LOCAL_INCLUDE_COMPONENT, 0, 1, 1, 0 },
 #endif
 #ifdef PREFIX_INCLUDE_DIR
-    { PREFIX_INCLUDE_DIR, 0, 0, 1, 0, 0 },
+    { PREFIX_INCLUDE_DIR, PREFIX_INCLUDE_COMPONENT, 0, 1, 0, 0 },
 #endif
 #ifdef FIXED_INCLUDE_DIR
     /* This is the dir for fixincludes.  */

@@ -832,12 +832,18 @@ dump_type_prefix (cxx_pretty_printer *pp, tree t, int flags)
 	 templates, e.g. std::is_function.  */
     case FUNCTION_TYPE:
       dump_type_prefix (pp, TREE_TYPE (t), flags);
+#ifdef TARGET_PRINT_TYPE_ATTRS
+      TARGET_PRINT_TYPE_ATTRS (t, scratch_buffer);
+#endif
       break;
 
     case METHOD_TYPE:
       dump_type_prefix (pp, TREE_TYPE (t), flags);
       pp_maybe_space (pp);
       pp_cxx_left_paren (pp);
+#ifdef TARGET_PRINT_TYPE_ATTRS
+      TARGET_PRINT_TYPE_ATTRS (t, scratch_buffer);
+#endif
       dump_aggr_type (pp, TYPE_METHOD_BASETYPE (t), flags);
       pp_cxx_colon_colon (pp);
       break;

@@ -57,7 +57,7 @@ extern char *getwd ();
 #define GUESSPATHLEN 100
 #endif
 
-#if !(defined (VMS) || (defined(_WIN32) && !defined(__CYGWIN__)))
+#if !(defined (VMS) || (defined(_WIN32) && !defined(__CYGWIN__)) || defined(__EMX__))
 
 /* Get the working directory.  Use the PWD environment variable if it's
    set correctly, since this is faster and gives more uniform answers
@@ -105,7 +105,7 @@ getpwd (void)
   return p;
 }
 
-#else	/* VMS || _WIN32 && !__CYGWIN__ */
+#else	/* VMS || _WIN32 && !__CYGWIN__ || __EMX__ */
 
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 255
@@ -125,4 +125,4 @@ getpwd (void)
   return pwd;
 }
 
-#endif	/* VMS || _WIN32 && !__CYGWIN__ */
+#endif	/* VMS || _WIN32 && !__CYGWIN__ || __EMX__ */

@@ -142,7 +142,14 @@ choose_tmpdir (void)
       len = strlen (base);
       tmpdir = XNEWVEC (char, len + 2);
       strcpy (tmpdir, base);
+#ifdef __EMX__
+  if (tmpdir[len - 1] == '\\' || tmpdir[len - 1] == '/')
+    tmpdir[--len] = DIR_SEPARATOR;
+  else
+    tmpdir[len] = DIR_SEPARATOR;
+#else
       tmpdir[len] = DIR_SEPARATOR;
+#endif
       tmpdir[len+1] = '\0';
       memoized_tmpdir = tmpdir;
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */

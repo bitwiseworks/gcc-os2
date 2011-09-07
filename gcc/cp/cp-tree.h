@@ -6560,7 +6560,11 @@ extern tree expand_start_catch_block		(tree);
 extern void expand_end_catch_block		(void);
 extern tree build_exc_ptr			(void);
 extern tree build_throw				(tree);
+#ifndef __OS2__
 extern int nothrow_libfn_p			(const_tree);
+#else
+extern int nothrow_libfn_p			(tree);
+#endif
 extern void check_handlers			(tree);
 extern tree finish_noexcept_expr		(tree, tsubst_flags_t);
 extern bool expr_noexcept_p			(tree, tsubst_flags_t);

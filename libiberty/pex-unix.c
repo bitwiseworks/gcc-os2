@@ -119,7 +119,7 @@ to_ptr32 (char **ptr64)
 
 static pid_t pex_wait (struct pex_obj *, pid_t, int *, struct pex_time *);
 
-#ifdef HAVE_WAIT4
+#if defined(HAVE_WAIT4) && !defined(__EMX__)
 
 static pid_t
 pex_wait (struct pex_obj *obj ATTRIBUTE_UNUSED, pid_t pid, int *status,

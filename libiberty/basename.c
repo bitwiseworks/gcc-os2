@@ -24,7 +24,7 @@ Behavior is undefined if the pathname ends in a directory separator.
 #endif
 
 #if defined (_WIN32) || defined (__MSDOS__) || defined (__DJGPP__) || \
-  defined (__OS2__)
+  defined (__OS2__) || defined (__EMX__)
 #define HAVE_DOS_BASED_FILE_SYSTEM
 #ifndef DIR_SEPARATOR_2 
 #define DIR_SEPARATOR_2 '\\'

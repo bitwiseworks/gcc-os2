@@ -2739,6 +2739,21 @@ convert_regs_entry (void)
   edge e;
   edge_iterator ei;
 
+  /* GCC-OS2: fp regs passing
+     Figure out the arguments passed in stack registers.  */
+  tree parm = DECL_ARGUMENTS (current_function_decl);
+  int incoming_arg [REG_STACK_SIZE];
+  int i;
+
+  memset (incoming_arg, 0, sizeof (incoming_arg));
+  while (parm)
+    {
+      rtx x = DECL_INCOMING_RTL (parm);
+      if (STACK_REG_P (x))
+	incoming_arg[REGNO (x) - FIRST_STACK_REG] = x;
+      parm = TREE_CHAIN (parm);
+    }
+
   /* Load something into each stack register live at function entry.
      Such live registers can be caused by uninitialized variables or
      functions not returning values on all paths.  In order to keep
@@ -2753,9 +2768,17 @@ convert_regs_entry (void)
       basic_block block = e->dest;
       block_info bi = BLOCK_INFO (block);
       int reg, top = -1;
+      int dead_arguments = 0; /* GCC-OS2: fp regs passing */
+
+      /* GCC-OS2: fp regs passing
+         Put the incoming arguments to the stack. */
+      for (i = LAST_STACK_REG; i >= FIRST_STACK_REG; i--)
+	if (incoming_arg [i - FIRST_STACK_REG])
+	  bi->stack_in.reg[++top] = i;
 
       for (reg = LAST_STACK_REG; reg >= FIRST_STACK_REG; --reg)
-	if (TEST_HARD_REG_BIT (bi->stack_in.reg_set, reg))
+	if (TEST_HARD_REG_BIT (bi->stack_in.reg_set, reg)
+	    && !incoming_arg [reg - FIRST_STACK_REG]) /* GCC-OS2: fp regs passing */
 	  {
 	    rtx init;
 
@@ -2768,6 +2791,42 @@ convert_regs_entry (void)
 	  }
 
       bi->stack_in.top = top;
+
+      /* GCC-OS2: fp regs passing */
+
+      /* Check whether there are any dead arguments that needs
+         to be popped.  */
+      for (i = LAST_STACK_REG; i >= FIRST_STACK_REG; i--)
+	if (incoming_arg [i - FIRST_STACK_REG]
+	    && !TEST_HARD_REG_BIT (bi->stack_in.reg_set, i))
+          {
+	    dead_arguments = 1;
+	    break;
+          }
+
+      if (dead_arguments)
+	{
+	  rtx seq;
+	  rtx after;
+	  start_sequence ();
+
+	  /* ??? pop_stack needs some point to emit insns after.
+	     Also needed to keep gen_sequence from returning a
+	     pattern as opposed to a sequence, which would lose
+	     REG_DEAD notes.  */
+	  after = emit_note (NOTE_INSN_DELETED);
+
+	  for (i = LAST_STACK_REG; i >= FIRST_STACK_REG; i--)
+	    if (incoming_arg [i - FIRST_STACK_REG]
+		&& !TEST_HARD_REG_BIT (bi->stack_in.reg_set,i))
+	      after = emit_pop_insn (after, &bi->stack_in,
+				     FP_MODE_REG (i, DFmode), EMIT_AFTER);
+
+	  seq = get_insns ();
+	  end_sequence ();
+	  inserted = 1;
+	  insert_insn_on_edge (seq, e);
+	}
     }
 
   return inserted;

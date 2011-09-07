@@ -241,6 +241,7 @@ gomp_test_lock_25 (omp_lock_25_t *lock)
 void
 gomp_init_nest_lock_25 (omp_nest_lock_25_t *lock)
 {
+#ifndef __EMX__
   pthread_mutexattr_t attr;
 
   pthread_mutexattr_init (&attr);
@@ -248,6 +249,7 @@ gomp_init_nest_lock_25 (omp_nest_lock_25_t *lock)
   pthread_mutex_init (&lock->lock, &attr);
   lock->count = 0;
   pthread_mutexattr_destroy (&attr);
+#endif
 }
 
 void

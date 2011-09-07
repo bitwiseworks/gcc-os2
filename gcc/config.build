@@ -83,5 +83,9 @@ case $build in
     build_exeext=.exe
     build_install_headers_dir=install-headers-cp
     ;;
+  i*86-pc-*emx)		# i?86 running OS/2
+    build_xm_file=i386/xm-emx.h
+    exeext=.exe
+    build_exeext=.exe
 esac
 

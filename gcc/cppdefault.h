@@ -68,4 +68,26 @@ extern const char *gcc_exec_prefix;
 /* Return true if the toolchain is relocated.  */
 bool cpp_relocated (void);
 
+/* GCC-OS2: Additional configuration options. */
+#ifndef STANDARD_INCLUDE_SYSROOT
+#define STANDARD_INCLUDE_SYSROOT 1
+#endif
+
+#ifndef SYSTEM_INCLUDE_COMPONENT
+#define SYSTEM_INCLUDE_COMPONENT 0
+#endif
+
+#ifndef SYSTEM_INCLUDE_SYSROOT
+#define SYSTEM_INCLUDE_SYSROOT 1
+#endif
+
+#ifndef LOCAL_INCLUDE_COMPONENT
+#define LOCAL_INCLUDE_COMPONENT 0
+#endif
+
+#ifndef PREFIX_INCLUDE_COMPONENT
+#define PREFIX_INCLUDE_COMPONENT 0
+#endif
+/* GCC-OS2: end */
+
 #endif /* ! GCC_CPPDEFAULT_H */

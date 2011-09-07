@@ -294,6 +294,9 @@ endif
 # -------------------------------------------
 
 SHELL = @SHELL@
+# "mkdir cp; cp something cp" doesn't work ash on OS/2.
+CP = cp@host_exeext@
+
 # pwd command to use.  Allow user to override default by setting PWDCMD in
 # the environment to account for automounters.  The make variable must not
 # be called PWDCMD, otherwise the value set here is passed to make
@@ -418,7 +421,7 @@ LIBDECNUMBER = ../libdecnumber/libdecnumber.a
 # The backtrace library.
 BACKTRACE = $(srcdir)/../libbacktrace
 BACKTRACEINC = -I$(BACKTRACE)
-LIBBACKTRACE = ../libbacktrace/.libs/libbacktrace.a
+LIBBACKTRACE = ../libbacktrace/.libs/backtrace.a
 
 # Target to use when installing include directory.  Either
 # install-headers-tar, install-headers-cpio or install-headers-cp.
@@ -1085,6 +1088,16 @@ BUILD_RTL = build/rtl.o build/read-rtl.o build/ggc-none.o \
 	    build/print-rtl.o build/hash-table.o build/sort.o
 BUILD_MD = build/read-md.o
 BUILD_ERRORS = build/errors.o
+
+# GCC-OS2: help
+# This gets linked into gcc if command-line help was enabled
+#CLH_LIBS = @gcc_clh_libs@
+# These definitions enables --help for gcc
+#CLH_CFLAGS = @gcc_clh_cflags@
+#CLH_GCC = @gcc_clh_gcc@
+#CLH_CPP = @gcc_clh_cpp@
+#CLH_G77 = @gcc_clh_g77@
+#CLH_GCJ = @gcc_clh_gcj@
 
 # Specify the directories to be searched for header files.
 # Both . and srcdir are used, in that order,
@@ -2017,11 +2030,21 @@ $(SPECS): xgcc$(exeext)
 # compile libgcc2.a.
 # Also create gcc-cross, so that install-common will install properly.
 gcc-cross$(exeext): xgcc$(exeext)
-	cp xgcc$(exeext) gcc-cross$(exeext)
+	$(CP) xgcc$(exeext) gcc-cross$(exeext)
 
 checksum-options:
 	echo "$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS)" > checksum-options.tmp \
 	&& $(srcdir)/../move-if-change checksum-options.tmp checksum-options
+
+# GCC-OS2: help.
+clh.o: clh.c $(CONFIG_H)
+	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) -c $(srcdir)/clh.c
+
+clh_gcc.c: $(srcdir)/doc/invoke.texi $(srcdir)/mkoptdesc.sh
+	$(srcdir)/mkoptdesc.sh $(srcdir)/doc/invoke.texi gcc > clh_gcc.c
+
+clh_cpp.c: $(srcdir)/doc/invoke.texi $(srcdir)/mkoptdesc.sh
+	$(srcdir)/mkoptdesc.sh $(srcdir)/doc/invoke.texi cpp > clh_cpp.c
 
 #
 # Build libgcc.a.
@@ -3004,7 +3027,7 @@ stmp-int-hdrs: $(STMP_FIXINC) $(USER_H) fixinc_list
 	done
 # Install the README
 	rm -f include-fixed/README
-	cp $(srcdir)/../fixincludes/README-fixinc include-fixed/README
+	$(CP) $(srcdir)/../fixincludes/README-fixinc include-fixed/README
 	chmod a+r include-fixed/README
 	$(STAMP) $@
 
@@ -3094,7 +3117,7 @@ stmp-fixinc: gsyslimits.h macro_list fixinc_list \
 	    if [ -f $${fix_dir}/limits.h ]; then \
 	      mv $${fix_dir}/limits.h $${fix_dir}/syslimits.h; \
 	    else \
-	      cp $(srcdir)/gsyslimits.h $${fix_dir}/syslimits.h; \
+	      $(CP) $(srcdir)/gsyslimits.h $${fix_dir}/syslimits.h; \
 	    fi; \
 	    chmod a+r $${fix_dir}/syslimits.h; \
 	  done; \

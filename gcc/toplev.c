@@ -1133,8 +1133,10 @@ general_init (const char *argv0, bool init_signals)
   if (init_signals)
     {
       /* Trap fatal signals, e.g. SIGSEGV, and convert them to ICE messages.  */
+#ifndef __EMX__ /* On OS/2 we'd rather see the registers to help understand where the crash occured */
 #ifdef SIGSEGV
       signal (SIGSEGV, crash_signal);
+#endif
 #endif
 #ifdef SIGILL
       signal (SIGILL, crash_signal);

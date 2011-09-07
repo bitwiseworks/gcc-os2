@@ -226,10 +226,12 @@ char **buildargv (const char *input)
 		      bsquote = 0;
 		      *arg++ = *input;
 		    }
+#ifndef __OS2__ /* skip this due to use of backslash in drive paths */
 		  else if (*input == '\\')
 		    {
 		      bsquote = 1;
 		    }
+#endif
 		  else if (squote)
 		    {
 		      if (*input == '\'')

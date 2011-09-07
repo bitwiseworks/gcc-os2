@@ -39,6 +39,9 @@
 # elements in the second list are separated by spaces.  If the second
 # argument is empty, the option names will be used as the directory
 # names.
+# If number of elements in second argument is bigger than number of options
+# in the first argument, the n+1'th element is used as default directory
+# name (i.e. when no one of options specified in argument 1 was used)
 
 # The optional third argument is a list of options which are
 # identical.  The elements in the list are separated by spaces.  Each
@@ -320,6 +323,12 @@ if [ -n "${osdirnames}" ]; then
   fi
 fi
 
+# See if default directory was specified
+if [ -n "$1" ]; then
+  defaultdir="$1"
+else
+  defaultdir="."
+fi
 # We need another recursive shell script to correctly handle positive
 # matches.  If we are invoked as
 #   genmultilib "opt1 opt2" "" "opt1=nopt1 opt2=nopt2"

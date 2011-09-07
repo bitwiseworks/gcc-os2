@@ -77,7 +77,7 @@ relative prefix can be found, return @code{NULL}.
 #endif
 
 #if defined (_WIN32) || defined (__MSDOS__) \
-    || defined (__DJGPP__) || defined (__OS2__)
+    || defined (__DJGPP__) || defined (__OS2__) || defined (__EMX__)
 #  define HAVE_DOS_BASED_FILE_SYSTEM
 #  define HAVE_HOST_EXECUTABLE_SUFFIX
 #  define HOST_EXECUTABLE_SUFFIX ".exe"

@@ -5246,6 +5246,11 @@ main (int argc, const char **argv)
   struct insn_def *id;
   int i;
 
+#ifdef EMX
+  /* Otherwise we can't use more than 32Mb memory and genattrtab uses a lot */
+  _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);
+#endif
+
   progname = "genattrtab";
 
   if (!init_rtx_reader_args_cb (argc, argv, handle_arg))

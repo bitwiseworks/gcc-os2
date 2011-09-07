@@ -1,0 +1,109 @@
+# start-of-file: $Id: t-emx 2502 2005-12-18 19:33:33Z bird $
+#
+# InnoTek GCC for OS/2 target stuff.
+#
+
+# Native include directory.
+ifdef PATH_IGCC
+NATIVE_SYSTEM_HEADER_DIR = $(subst \,/,$(PATH_IGCC)/include)
+else
+ifdef PATH_EMXPGCC
+NATIVE_SYSTEM_HEADER_DIR = $(subst \,/,$(PATH_EMXPGCC)/include)
+else
+ifdef PATH_EMX
+NATIVE_SYSTEM_HEADER_DIR = $(subst \,/,$(PATH_EMX)/include)
+endif
+endif
+endif
+
+# The version of GCC in this tree
+gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
+
+# DLL version string.
+gccdll_version  = $(subst .,,$(gcc_version))
+
+# The command to run REXX scripts (you overload)
+REXX           ?= kRx.exe
+
+# The OS/2 target have shared libgcc, but the names are release specific and constrained by 8.3 limits.
+SHLIB_BASENAME  = gcc$(gccdll_version)
+SHLIB_MULTINAME = $(SHLIB_BASENAME)
+SHLIB_DLLNAME   = $(SHLIB_MULTINAME).dll
+SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
+	$(REXX) dllar.cmd -o $(SHLIB_DLLNAME) \
+	-ordinal @multilib_flags@ -nocrtdll \
+	-flags "-Zhigh-mem -Zomf -g" \
+        -def ../../gcc445_good.def \
+	-ex "___main ___do_global_* ___ctordtor* ___eh* ___pop* _DLL_InitTerm" \
+	-d "GNU GCC Runtime Version $(gcc_version)" \
+	-libf "INITINSTANCE TERMGLOBAL" \
+	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o \
+    && emximp -o libgcc_so_d.a $(srcdir)/config/i386/emx-libgcc_so_d.def \
+	&& ar rs libgcc_so_d.a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o\
+    && touch $$@
+SHLIB_SUBDIR    = .
+SHLIB_INSTALL   = $$(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_DLLNAME) $$(DESTDIR)$$(slibdir)/ \
+    && $$(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_BASENAME).a $$(DESTDIR)$$(libsubdir)/$(SHLIB_SUBDIR)/ \
+    && $$(INSTALL_DATA) $(SHLIB_SUBDIR)/libgcc_so_d.a $$(DESTDIR)$$(libsubdir)/$(SHLIB_SUBDIR)/
+
+# Dont use collect2
+USE_COLLECT2    =
+# Don't run fixproto
+STMP_FIXPROTO   =
+## Don't fix includes
+# bird 2005-12-18: Yes we do, it'll prevent syslimits.h from getting in place otherwise.
+##STMP_FIXINC     =
+
+# Override libgcc2 C flags to ensure stack probing and epilogues.
+TARGET_LIBGCC2_CFLAGS = -Zaout -O2 -fomit-frame-pointer -Wall -DNDEBUG
+
+# Provide alternative source code for libgcc1
+LIBGCC1         = libgcc1-asm.a
+CROSS_LIBGCC1   = libgcc1-asm.a
+LIB1ASMSRC      = i386/emx-libgcc1.asm
+LIB1ASMFUNCS    = _alloca
+
+# Extra functions to add to libgcc.
+LIB2FUNCS_EXTRA = $(srcdir)/config/i386/emx-ctordtor.c
+LIB2ADDEH       = \
+    $(srcdir)/config/i386/emx-eh.c \
+    $(srcdir)/config/i386/emx-dllinit.c \
+    $(srcdir)/unwind-dw2.c \
+    $(srcdir)/unwind-dw2-fde.c \
+    $(srcdir)/unwind-sjlj.c \
+    $(srcdir)/unwind-c.c
+#LIB2ADDEHDEP
+
+
+# Copy these files to include/ subdirectory
+# GCC-OS/2: We override this to prevent usage of $(srcdir)/ginclude/stddef.h
+#           and $(srcdir)/ginclude/float.h.
+# bird:     Don't forget to check this when updating the code GCC.
+USER_H          = \
+	 $(srcdir)/ginclude/iso646.h \
+	 $(srcdir)/ginclude/stdarg.h \
+	 $(srcdir)/ginclude/stdbool.h \
+	 \
+	 $(srcdir)/ginclude/varargs.h \
+	 $(srcdir)/unwind-generic.h \
+	 $(EXTRA_HEADERS)
+
+# bird (#424): New gcc*dll hacks
+stage1 stage2 stage3 stage4:
+	echo "t-emx hacks: $@ starting"
+	-mv -f gcc4*.dll gcc4*.a gcc4*.def $@
+	echo "t-emx hacks: $@ done"
+
+# how to make the emx.o object.
+emx.o: $(srcdir)/config/i386/emx.c $(RTL_H) $(TREE_H) $(CONFIG_H)
+	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx.c
+
+# how to make the emx-cxx.o object.
+emx-cxx.o: $(srcdir)/config/i386/emx-cxx.c $(RTL_H) $(TREE_H) $(CONFIG_H)
+	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-cxx.c
+
+# how to make the emx-stubs.o object.
+emx-stubs.o: $(srcdir)/config/i386/emx-stubs.c $(RTL_H) $(TREE_H) $(CONFIG_H)
+	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-stubs.c
+
+# end-of-file: t-emx

@@ -33,7 +33,11 @@
 # define INO_T_EQ(A, B) (!memcmp (&(A), &(B), sizeof (A)))
 # define INO_T_COPY(DEST, SRC) memcpy (&(DEST), &(SRC), sizeof (SRC))
 #elif !defined (HOST_LACKS_INODE_NUMBERS)
-# define INO_T_EQ(A, B) ((A) == (B))
+# if defined __EMX__
+#  define INO_T_EQ(A, B) 0
+# else
+#  define INO_T_EQ(A, B) ((A) == (B))
+# endif
 # define INO_T_COPY(DEST, SRC) (DEST) = (SRC)
 #endif
 

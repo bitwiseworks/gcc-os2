@@ -1,0 +1,73 @@
+; Auto-generated file, DO NOT EDIT!!! (see libgcc_d.awk) */
+LIBRARY libc063 INITINSTANCE TERMINSTANCE
+EXPORTS
+EXPORTS
+; GCC322 code and const (starts at 100)
+    "__Unwind_DeleteException" @100
+    "__Unwind_Find_FDE" @101
+    "__Unwind_ForcedUnwind" @102
+    "__Unwind_GetDataRelBase" @103
+    "__Unwind_GetGR" @104
+    "__Unwind_GetIP" @105
+    "__Unwind_GetLanguageSpecificData" @106
+    "__Unwind_GetRegionStart" @107
+    "__Unwind_GetTextRelBase" @108
+    "__Unwind_RaiseException" @109
+    "__Unwind_Resume" @110
+    "__Unwind_SetGR" @111
+    "__Unwind_SetIP" @112
+    "___absvdi2" @113
+    "___absvsi2" @114
+    "___addvdi3" @115
+    "___addvsi3" @116
+    "___ashldi3" @117
+    "___ashrdi3" @118
+    "___clear_cache" @119
+    "___clz_tab" @120
+    "___cmpdi2" @121
+    "___deregister_frame" @122
+    "___deregister_frame_info" @123
+    "___deregister_frame_info_bases" @124
+    "___divdi3" @125
+    "___ffsdi2" @126
+    "___fixdfdi" @127
+    "___fixsfdi" @128
+    "___fixunsdfdi" @129
+    "___fixunsdfsi" @130
+    "___fixunssfdi" @131
+    "___fixunssfsi" @132
+    "___fixunsxfdi" @133
+    "___fixunsxfsi" @134
+    "___fixxfdi" @135
+    "___floatdidf" @136
+    "___floatdisf" @137
+    "___floatdixf" @138
+    "___frame_state_for" @139
+    "___lshrdi3" @140
+    "___moddi3" @141
+    "___muldi3" @142
+    "___mulvdi3" @143
+    "___mulvsi3" @144
+    "___negdi2" @145
+    "___negvdi2" @146
+    "___negvsi2" @147
+    "___register_frame" @148
+    "___register_frame_info" @149
+    "___register_frame_info_bases" @150
+    "___register_frame_info_table" @151
+    "___register_frame_info_table_bases" @152
+    "___register_frame_table" @153
+    "___subvdi3" @154
+    "___subvsi3" @155
+    "___ucmpdi2" @156
+    "___udiv_w_sdiv" @157
+    "___udivdi3" @158
+    "___udivmoddi4" @159
+    "___umoddi3" @160
+    "__alloca" @161
+; GCC333
+    "___gcc_personality_v0" @162  ; (this is a bug in the gcc 3.2.2 config, it should've been there too.)
+    "__Unwind_Backtrace" @163
+    "__Unwind_FindEnclosingFunction" @164
+    "__Unwind_GetCFA" @165
+    "__Unwind_Resume_or_Rethrow" @166

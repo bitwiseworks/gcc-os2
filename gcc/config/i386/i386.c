@@ -111,6 +111,10 @@ static void ix86_emit_restore_reg_using_pop (rtx);
 #define CHECK_STACK_LIMIT (-1)
 #endif
 
+#ifdef EMX
+extern bool i386_emx_binds_local_p (const_tree);
+#endif
+
 /* Return index of given mode in mult and division cost tables.  */
 #define MODE_INDEX(mode)					\
   ((mode) == QImode ? 0						\
@@ -7283,6 +7287,11 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
 	}
     }
 
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+  /* _Optlink calling convention says all args until the ellipsis
+             are passed in registers, and all varargs on the stack. */
+  if (!cum->optlink)
+#endif
   if (!TARGET_64BIT)
     {
       /* If there are variable arguments, then we won't pass anything
@@ -7319,8 +7328,26 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
 	      cum->fastcall = 1;
 	    }
 	  else
-	    cum->nregs = ix86_function_regparm (fntype, fndecl);
+            {
+		cum->nregs = ix86_function_regparm (fntype, fndecl);
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES /* reasonable confidence */
+		if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (fntype)))
+	          {
+			cum->nregs = 3; cum->optlink = 1;
+		  }
+#endif
+	    }
 	}
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      /* Limit number of registers to pass arguments as in _Optlink specification */
+      if (cum->optlink)
+        {
+          if (cum->nregs > 3)
+            cum->nregs = 3;
+          if (cum->fpu_nregs > 4)
+            cum->fpu_nregs = 4;
+        }
+#endif
 
       /* Set up the number of SSE registers used for passing SFmode
 	 and DFmode arguments.  Warn for mismatching ABI.  */
@@ -8281,6 +8308,61 @@ function_arg_advance_32 (CUMULATIVE_ARGS *cum, machine_mode mode,
     case E_QImode:
 pass_in_reg:
       cum->words += words;
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok */
+          /* Optlink functions never pass aggregates in registers
+             (they are pushed on the stack, and the registers are
+             preserved for following parameters). */
+          if (cum->optlink)
+            {
+              /* If out of eyecatcher slots, do nothing */
+              if (!cum->ec_slots)
+                return;
+
+              if (INTEGRAL_TYPE_P (type)
+               || POINTER_TYPE_P (type))
+                {
+                  /* Integer types takes one slot in eyecatcher */
+                  cum->ec_slots--;
+                }
+              else if (FLOAT_MODE_P (mode))
+                {
+                  /* Fixed-point parameters are passed in FPU registers */
+                  if (cum->fpu_nregs)
+                    {
+                      cum->fpu_nregs--;
+                      cum->fpu_regno++;
+                      /* Args passed in FPU stack takes one eyecatcher slot */
+                      cum->ec_slots--;
+                    }
+                  else
+                    {
+                      /* FPU args passed on RT stack takes 1/2/4 slots */
+                      cum->ec_slots -= words;
+                    }
+
+                  /* The case with ec_slots <= 0 will be catched a little lates */
+                  if (cum->ec_slots > 0)
+                    return;
+                }
+              else
+                {
+                  /* This is nor a integer, address or float parameter.
+                     Pass it on the stack but count its size in eyecatcher. */
+                  cum->ec_slots -= words;
+                  if (cum->ec_slots > 0)
+                    return;
+                }
+
+              /* If we're out of eyecatcher slots, pass the arg on the stack */
+              if (cum->ec_slots <= 0)
+                {
+                  cum->ec_slots = 0;
+                  cum->nregs = 0;
+                  cum->fpu_nregs = 0;
+                  return;
+                }
+            }
+#endif
       cum->nregs -= words;
       cum->regno += words;
       if (cum->nregs >= 0)
@@ -8330,6 +8412,10 @@ pass_in_reg:
     case E_V4SFmode:
     case E_V2DFmode:
       if (!type || !AGGREGATE_TYPE_P (type))
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok */
+          && !cum->optlink
+#endif
+        )
 	{
 	  cum->sse_words += words;
 	  cum->sse_nregs -= 1;
@@ -8498,11 +8584,36 @@ function_arg_32 (CUMULATIVE_ARGS *cum, machine_mode mode,
       return NULL_RTX;
     }
 
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok */
+  rtx ret = NULL_RTX;
+      /* For optlink calling convention, don't pass anything other than
+         integral types and floats through registers. */
+      if (!cum->optlink
+          || INTEGRAL_TYPE_P (type)
+          || POINTER_TYPE_P (type)
+          || (TREE_CODE (type) == REAL_TYPE))
+#endif
+
   switch (mode)
     {
     default:
       break;
 
+#if defined TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok  */
+        case E_XFmode:
+        case E_TFmode:
+        if (cum->fpu_nregs && cum->optlink && cum->ec_slots)
+          {
+            /* Pass first four floating-point args in FPU registers */
+            ret = gen_rtx_PARALLEL (mode, rtvec_alloc (2));
+            XVECEXP (ret, 0, 0) = gen_rtx_EXPR_LIST ( VOIDmode,
+                                           NULL_RTX, const0_rtx);
+            XVECEXP (ret, 0, 1) = gen_rtx_EXPR_LIST (VOIDmode,
+                                           gen_rtx_REG ( mode, FIRST_FLOAT_REG + cum->fpu_regno),
+                                           const0_rtx);
+          }
+        break;
+#endif
     case E_BLKmode:
       if (bytes < 0)
 	break;
@@ -8513,6 +8624,28 @@ function_arg_32 (CUMULATIVE_ARGS *cum, machine_mode mode,
     case E_QImode:
 pass_in_reg:
       if (words <= cum->nregs)
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok */
+          {
+            if (cum->optlink)
+              {
+                if (cum->ec_slots)
+                  {
+                    /* Optlink specs says that the parameter is passed in a register
+                       and space on the stack is reserved for it as well (which is not
+                       filled). Currently GCC will pass the parameter *both* in register
+                       and stack; this is suboptimal but is compatible. */
+                    ret = gen_rtx_PARALLEL ( mode, rtvec_alloc (2));
+                    XVECEXP (ret, 0, 0) = gen_rtx_EXPR_LIST ( VOIDmode,
+                                                   NULL_RTX, const0_rtx);
+                    XVECEXP (ret, 0, 1) = gen_rtx_EXPR_LIST ( VOIDmode,
+                                                   gen_rtx_REG ( mode, cum->regno),
+                                                   const0_rtx);
+                  }
+              }
+            else
+              ret = gen_rtx_REG (mode, cum->regno);
+          }
+#else
 	{
 	  int regno = cum->regno;
 
@@ -8532,15 +8665,42 @@ pass_in_reg:
 	    }
 	  return gen_rtx_REG (mode, regno);
 	}
+#endif
       break;
 
     case E_DFmode:
+#if defined TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok  */
+        if (cum->fpu_nregs && cum->optlink && cum->ec_slots)
+          {
+            /* Pass first four floating-point args in FPU registers */
+            ret = gen_rtx_PARALLEL (mode, rtvec_alloc (2));
+            XVECEXP (ret, 0, 0) = gen_rtx_EXPR_LIST ( VOIDmode,
+                                           NULL_RTX, const0_rtx);
+            XVECEXP (ret, 0, 1) = gen_rtx_EXPR_LIST (VOIDmode,
+                                           gen_rtx_REG ( mode, FIRST_FLOAT_REG + cum->fpu_regno),
+                                           const0_rtx);
+          }
+        break;
+#endif
       if (cum->float_in_sse == -1)
 	error_p = true;
       if (cum->float_in_sse < 2)
 	break;
       /* FALLTHRU */
     case E_SFmode:
+#if defined TARGET_OPTLINK_DECL_ATTRIBUTES /* looks ok */
+        if (cum->fpu_nregs && cum->optlink && cum->ec_slots)
+          {
+            /* Pass first four floating-point args in FPU registers */
+            ret = gen_rtx_PARALLEL (mode, rtvec_alloc (2));
+            XVECEXP (ret, 0, 0) = gen_rtx_EXPR_LIST ( VOIDmode,
+                                           NULL_RTX, const0_rtx);
+            XVECEXP (ret, 0, 1) = gen_rtx_EXPR_LIST (VOIDmode,
+                                           gen_rtx_REG ( mode, FIRST_FLOAT_REG + cum->fpu_regno),
+                                           const0_rtx);
+          }
+        break;
+#endif
       if (cum->float_in_sse == -1)
 	error_p = true;
       if (cum->float_in_sse < 1)
@@ -8837,6 +8997,9 @@ ix86_compat_aligned_value_p (const_tree type)
        || mode == TFmode
        || mode == TCmode)
       && (!TYPE_USER_ALIGN (type) || TYPE_ALIGN (type) > 128))
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTESz
+          && !cum->optlink
+#endif
     return true;
   if (TYPE_ALIGN (type) < 128)
     return false;
@@ -15412,11 +15575,12 @@ ix86_legitimate_constant_p (machine_mode mode, rtx x)
       if (SYMBOL_REF_TLS_MODEL (x))
 	return false;
 
+#ifndef __EMX__ /* 2009-01-15 */
       /* DLLIMPORT symbols are never valid.  */
       if (TARGET_DLLIMPORT_DECL_ATTRIBUTES
 	  && SYMBOL_REF_DLLIMPORT_P (x))
 	return false;
-
+#endif
 #if TARGET_MACHO
       /* mdynamic-no-pic */
       if (MACHO_DYNAMIC_NO_PIC_P)
@@ -16627,7 +16791,11 @@ get_dllimport_decl (tree decl, bool beimport)
   name = targetm.strip_name_encoding (name);
   if (beimport)
     prefix = name[0] == FASTCALL_PREFIX || user_label_prefix[0] == 0
-      ? "*__imp_" : "*__imp__";
+#ifndef __OS2__
+    ? "*__imp_" : "*__imp__";
+#else
+    ? "" : "";
+#endif
   else
     prefix = user_label_prefix[0] == 0 ? "*.refptr." : "*refptr.";
   namelen = strlen (name);
@@ -16774,13 +16942,14 @@ ix86_legitimize_address (rtx x, rtx, machine_mode mode)
       return gen_rtx_PLUS (Pmode, t, XEXP (XEXP (x, 0), 1));
     }
 
+#ifndef __EMX__ /* 2009-01-15 */
   if (TARGET_DLLIMPORT_DECL_ATTRIBUTES)
     {
       rtx tmp = legitimize_pe_coff_symbol (x, true);
       if (tmp)
         return tmp;
     }
-
+#endif
   if (flag_pic && SYMBOLIC_CONST (x))
     return legitimize_pic_address (x, 0);
 
@@ -45956,6 +46125,14 @@ static const struct attribute_spec ix86_attribute_table[] =
     ix86_handle_fentry_name, NULL },
   { "cf_check", 0, 0, true, false, false, false,
     ix86_handle_fndecl_attribute, NULL },
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+  /* System says the function is extern "C" and is not underscored. */
+  { "system", 0, 0, false, true,  true,  ix86_handle_cconv_attribute },
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+  /* Optlink is like regparm with a few differences */
+  { "optlink", 0, 0, false, true,  true,  ix86_handle_cconv_attribute },
+#endif
 
   /* End element.  */
   { NULL, 0, 0, false, false, false, false, NULL, NULL }
@@ -51621,8 +51798,13 @@ ix86_run_selftests (void)
 #define TARGET_BINDS_LOCAL_P ix86_binds_local_p
 #endif
 #if TARGET_DLLIMPORT_DECL_ATTRIBUTES
+#ifndef __EMX__
 #undef TARGET_BINDS_LOCAL_P
 #define TARGET_BINDS_LOCAL_P i386_pe_binds_local_p
+#else
+#undef TARGET_BINDS_LOCAL_P
+#define TARGET_BINDS_LOCAL_P i386_emx_binds_local_p
+#endif /* __EMX__ */
 #endif
 
 #undef TARGET_ASM_OUTPUT_MI_THUNK

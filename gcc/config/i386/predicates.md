@@ -603,8 +603,10 @@
   if (ix86_cmodel == CM_LARGE || ix86_cmodel == CM_LARGE_PIC
       || flag_force_indirect_call)
     return false;
+#ifndef __EMX__ /* mangles dllimport symbols in a bad way on OS/2 */
   if (TARGET_DLLIMPORT_DECL_ATTRIBUTES && SYMBOL_REF_DLLIMPORT_P (op))
     return false;
+#endif
   return true;
 })
 

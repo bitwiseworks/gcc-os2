@@ -347,5 +347,7 @@ update_path (const char *path, const char *key)
 void
 set_std_prefix (const char *prefix, int len)
 {
+#ifndef __EMX__
   std_prefix = save_string (prefix, len);
+#endif
 }

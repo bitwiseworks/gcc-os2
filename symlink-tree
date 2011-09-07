@@ -71,7 +71,8 @@ for f in `ls -a ${srcdir}`; do
   else
     echo "$f		..linked"
     rm -f $f
-    ln -s ${srcdir}/$f .
+#    ln -s ${srcdir}/$f .
+    cp -p ${srcdir}/$f .
   fi
 done
 

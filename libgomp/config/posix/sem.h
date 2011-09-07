@@ -38,7 +38,11 @@
 # pragma GCC visibility push(default)
 #endif
 
+#ifndef __EMX__
 #include <semaphore.h>
+#else
+#define HAVE_BROKEN_POSIX_SEMAPHORES 1
+#endif
 
 #ifdef HAVE_ATTRIBUTE_VISIBILITY
 # pragma GCC visibility pop

@@ -1,0 +1,12 @@
+# r=bird: why this here? Should be sufficient to do -s when linking.
+CFLAGS = -s -g
+INSTALL = cp
+
+# Add the "s" flag to AR_FLAGS to add an archive index instead of RANLIB
+AR_FLAGS = rcs
+
+# hack: Instead of ranlib run dllar which will make a shared library (dll)
+#       TODO: Don't use RANLIB because it f**ks up install.
+#       TODO: Pass the correct -g/-s flag without using non-standard stuff.
+# bird: Forget this it breaks the install. We'll need a better hack.
+# override RANLIB = kRx.exe dllar.cmd -cc '$(CC)' -d 'The GNU -liberty library' -o iberty -lgcc

@@ -1,0 +1,21 @@
+# We don't want debugging info
+# Accomplish this by overriding CFLAGS.
+CFLAGS   = -s -O2
+CXXFLAGS = -s -O2
+LDFLAGS  = -s -Zcrtdll -Zexe
+
+# Override SHELL variable IF it's COMSPEC (OS/2 shell)
+ifeq "$(SHELL)" "$(COMSPEC)"
+ifdef UNIXROOT
+SHELL=$(UNIXROOT)/bin/sh.exe
+else
+SHELL=sh
+endif
+endif
+
+# Skip installation
+# bird: true isn't a good value. It will by default point to dummy rule, so leave it.
+# INSTALL_DOSREL=true
+
+# No need for RANLIB
+RANLIB=true

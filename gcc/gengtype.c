@@ -285,7 +285,11 @@ read_input_line (FILE *list, char **herep, char **linep, struct fileloc *pos)
       /* No space for a lang_bitmap is necessary.  Discard the '['. */
       c = getc (list);
       line = here;
+#ifndef __EMX__
       while (c != ']' && c != '\n' && c != EOF)
+#else
+      while (c != ']' && c != '\n' && c != EOF && c != '\r')
+#endif
 	{
 	  *here++ = c;
 	  c = getc (list);
@@ -295,7 +299,11 @@ read_input_line (FILE *list, char **herep, char **linep, struct fileloc *pos)
       if (c == ']')
 	{
 	  c = getc (list);	/* eat what should be a newline */
+#ifndef __EMX__
 	  if (c != '\n' && c != EOF)
+#else
+	  if (c != '\n' && c != EOF && c != '\r' )
+#endif
 	    error_at_line (pos, "junk on line after language tag [%s]", line);
 	}
       else

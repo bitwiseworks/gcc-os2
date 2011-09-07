@@ -2609,6 +2609,20 @@ assemble_name (FILE *file, const char *name)
 	name = IDENTIFIER_POINTER (id);
       gcc_assert (! TREE_CHAIN (id));
     }
+#if 0
+  /* Some code assume that this is the identifier returned
+     by DECL_ASSEMBLER_NAME (). However, for GCC-OS2 it's not
+     since the calling conventions _Optlink, __stdcall, and
+     _System name encodings are included in the identifier
+     returned by DECL_ASSEMBLER_NAME ().
+     Therefore we need this extra little cludge here. */
+  if (name != real_name)
+    {
+      id = maybe_get_identifier (name);
+      if (id)
+	mark_referenced (id);
+   }
+#endif
 
   assemble_name_raw (file, name);
 }

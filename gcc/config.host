@@ -251,6 +251,11 @@ case ${host} in
     host_extra_gcc_objs="${host_extra_gcc_objs} driver-mingw32.o"
     host_lto_plugin_soname=liblto_plugin-0.dll
     ;;
+  i*86-pc-*emx)		# i?86 running OS/2
+    host_exeext=.exe
+#    out_host_hook_obj=host-emx.o
+#    host_xmake_file="${host_xmake_file} i386/x-emx"
+    ;;
   i[34567]86-*-darwin* | x86_64-*-darwin*)
     out_host_hook_obj="${out_host_hook_obj} host-i386-darwin.o"
     host_xmake_file="${host_xmake_file} i386/x-darwin"

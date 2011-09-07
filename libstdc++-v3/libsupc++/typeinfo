@@ -70,7 +70,7 @@ namespace __cxxabiv1
 
 // By default follow the old inline rules to avoid ABI changes.
 #ifndef __GXX_TYPEINFO_EQUALITY_INLINE
-  #if !__GXX_WEAK__
+  #if !__GXX_WEAK__ || (defined(__OS2__) && defined(__EMX__)) /* bird */
     #define __GXX_TYPEINFO_EQUALITY_INLINE 0
   #else
     #define __GXX_TYPEINFO_EQUALITY_INLINE 1
