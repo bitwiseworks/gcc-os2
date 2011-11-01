@@ -23,7 +23,7 @@ gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
 gccdll_version  = $(subst .,,$(gcc_version))
 
 # The command to run REXX scripts (you overload)
-REXX           ?= kRx.exe
+REXX           ?= cmd.exe /c
 
 # The OS/2 target have shared libgcc, but the names are release specific and constrained by 8.3 limits.
 SHLIB_BASENAME  = gcc$(gccdll_version)
