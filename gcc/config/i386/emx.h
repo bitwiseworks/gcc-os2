@@ -465,19 +465,11 @@ do {									\
   "%{Zsmall-conv:%{Zcrtdll*:%e-Zsmall-conv and -Zcrtdll are incompatible}}"
 
 /* Override how and when libgcc.a is included (%G).  */
-#if 0 /* shared lib == libcXY.dll (not bootstrapping issues here!) */
 #define LIBGCC_SPEC                                                            \
   "%{static|static-libgcc:%{shared-libgcc:%e-static-libgcc and -shared-libgcc are incompatible}}"\
   "%{shared-libgcc:-lgcc_so_d}"                                                \
   "%{!shared-libgcc:%{!static-libgcc:%{!static*:-lgcc_so_d}}}"                 \
   "%{!shared-libgcc:%{static-libgcc|static:-lgcc_eh -lgcc}}"
-#else /* shared lib == gcc445.dll */
-#define LIBGCC_SPEC                                                            \
-  "%{static|static-libgcc:%{shared-libgcc:%e-static-libgcc and -shared-libgcc are incompatible}}"\
-  "%{shared-libgcc:-lgcc445}"                                            \
-  "%{!shared-libgcc:%{!static-libgcc:%{!static*:-lgcc445}}}"             \
-  "%{!shared-libgcc:%{static-libgcc|static:-lgcc -lgcc_eh }}"
-#endif
 
 /* We have a shared libgcc, but don't need this extra handling. */
 #undef ENABLE_SHARED_LIBGCC

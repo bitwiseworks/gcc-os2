@@ -33,13 +33,11 @@ SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
 	$(REXX) dllar.cmd -o $(SHLIB_DLLNAME) \
 	-ordinal @multilib_flags@ -nocrtdll \
 	-flags "-Zhigh-mem -Zomf -g" \
-        -def ../../gcc445_good.def \
 	-ex "___main ___do_global_* ___ctordtor* ___eh* ___pop* _DLL_InitTerm" \
 	-d "GNU GCC Runtime Version $(gcc_version)" \
 	-libf "INITINSTANCE TERMGLOBAL" \
 	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o \
-    && emximp -o libgcc_so_d.a $(srcdir)/config/i386/emx-libgcc_so_d.def \
-	&& ar rs libgcc_so_d.a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o\
+    && ln -s -f $(SHLIB_BASENAME).a libgcc_so_d.a \
     && touch $$@
 SHLIB_SUBDIR    = .
 SHLIB_INSTALL   = $$(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_DLLNAME) $$(DESTDIR)$$(slibdir)/ \
