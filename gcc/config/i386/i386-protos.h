@@ -375,7 +375,6 @@ extern rtl_opt_pass *make_pass_remove_partial_avx_dependency
 /* In emx.c  */
 extern bool i386_emx_binds_local_p (const_tree);
 extern void i386_emx_init_sections (void);
-extern void i386_emx_asm_out_destructor (rtx, int);
 extern tree i386_emx_mangle_decl_assembler_name (tree, tree);
 extern void i386_emx_maybe_record_exported_symbol (tree, const char *, int);
 extern bool i386_emx_valid_dllimport_attribute_p (const_tree);

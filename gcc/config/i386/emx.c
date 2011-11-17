@@ -2,7 +2,7 @@
 
 Original version by Eberhard Mattes, based on i386.c.
 Heavily modified by Andrew Zabolotny and Knut St. Osmundsen.
-Modified for GCC 4.x by Paul Smedley 2008-2010
+Modified for GCC 4.x by Paul Smedley 2008-2011
 
 This file is part of GNU CC.
 
@@ -150,153 +150,6 @@ void birddump (tree node, const char *pszFunction)
 #define DUMP(node) do {} while (0)
 #endif
 
-int emx_c_set_decl_assembler_name (tree decl, int fclass)
-{
-  static int recurse;
-  const char *oldsym;
-  char *newsym;
-  size_t sl;
-  tree id, type;
-  int rc = 1;
-
-  dfprintf((stderr, "emx_c_set_decl_assembler_name\n"));
-  DUMP(decl);
-
-  /* Sometimes we recursively call DECL_ASSEMBLER_NAME to apply the default
-     mangling rules for current compiler. */
-  if (recurse)
-    return 0;
-
-  /* Only functions declarations are subject to mangling. */
-  if (TREE_CODE (decl) != FUNCTION_DECL)
-    return 0;
-
-  recurse++;
-  type = TREE_TYPE (decl);
-
-  if (lookup_attribute ("system", TYPE_ATTRIBUTES (type)))
-    {
-      /* Here we mangle _System functions as defined by IBM specs.
-         The function always gets its name as-is (unless it is a method,
-         which is a undefined case as VACPP always use _Optlink for methods,
-         at least that's what I have understood from the docs). */
-
-      oldsym = IDENTIFIER_POINTER (DECL_NAME (decl));
-      if (fclass)
-        return 0;
-
-      /* Specifying '*' as first symbol character tells gcc (see varasm.c,
-         function assemble_name()) to output the label as-is rather than
-         invoking the ASM_OUTPUT_LABELREF macro (which prepends a underscore) */
-
-      sl = strlen (oldsym);
-      newsym = xmalloc (sl + 2);
-      newsym [0] = '*';
-      memcpy (newsym + 1, oldsym, sl + 1);
-
-      SET_DECL_ASSEMBLER_NAME (decl, get_identifier (newsym));
-
-      dfprintf ((stderr, "dbg: system %s -> %s\n", oldsym, newsym));
-    }
-  else if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (type)))
-    {
-      /* At the moment we're only implementing OS/2 VAC linking
-         compatibility for the C language. This means that no leading
-         underscore.
-         For C++ we are not compatible. It doesn't make that much sense
-         either since we're not VFT compatible either. For simplicity
-         and safety we are removing the leading underscore from the
-         default mangled names to catch invalid declarations in the
-         linking. */
-
-      id = DECL_ASSEMBLER_NAME (decl);
-
-      /* Remove the leading underscore. */
-      oldsym = IDENTIFIER_POINTER (id);
-      sl = strlen (oldsym);
-      newsym = xmalloc (sl + 2);
-      newsym [0] = '*';
-      memcpy (newsym + 1, oldsym, sl + 1);
-
-      SET_DECL_ASSEMBLER_NAME (decl, get_identifier (newsym));
-
-      dfprintf ((stderr, "dbg: optlink %s -> %s\n", oldsym, newsym));
-    }
-  else if (lookup_attribute ("stdcall", TYPE_ATTRIBUTES (type)))
-    {
-      /* Mangle decl as the former assembler name modified with a
-         suffix consisting of an atsign (@) followed by the number of bytes of
-         arguments.
-         For C++ the same applies as for optlink. See above. */
-
-      int total = 0;
-
-      /* If function does not have ellipsis as last argument, count total args size */
-      if (TYPE_ARG_TYPES (type))
-        if (TREE_VALUE (tree_last (TYPE_ARG_TYPES (type))) == void_type_node)
-          {
-            tree formal_type = TYPE_ARG_TYPES (type);
-
-            while (TREE_VALUE (formal_type) != void_type_node)
-              {
-                int parm_size = TREE_INT_CST_LOW (TYPE_SIZE (TREE_VALUE (formal_type)));
-                /* Must round up to include padding.  This is done the same
-                   way as in store_one_arg.  */
-                parm_size = ((parm_size + PARM_BOUNDARY - 1) / PARM_BOUNDARY * PARM_BOUNDARY);
-                total += parm_size;
-                formal_type = TREE_CHAIN (formal_type);
-              }
-          }
-
-      id = DECL_ASSEMBLER_NAME (decl);
-      oldsym = IDENTIFIER_POINTER (id);
-      newsym = xmalloc (strlen (oldsym) + 10);
-      sprintf (newsym, "%s@%d", oldsym, total / BITS_PER_UNIT);
-      SET_DECL_ASSEMBLER_NAME (decl, get_identifier (newsym));
-
-      dfprintf ((stderr, "dbg: stdcall %s -> %s\n", oldsym, newsym));
-    }
-  else if (lookup_attribute ("fastcall", TYPE_ATTRIBUTES (type)))
-    {
-      /* Mangle decl as the former assembler name modified with a prefix of an atsign (@), and
-         suffix consisting of an atsign (@) followed by the number of bytes of
-         arguments.
-         For C++ the same applies as for optlink. See above. */
-
-      int total = 0;
-
-      /* If function does not have ellipsis as last argument, count total args size */
-      if (TYPE_ARG_TYPES (type))
-        if (TREE_VALUE (tree_last (TYPE_ARG_TYPES (type))) == void_type_node)
-          {
-            tree formal_type = TYPE_ARG_TYPES (type);
-
-            while (TREE_VALUE (formal_type) != void_type_node)
-              {
-                int parm_size = TREE_INT_CST_LOW (TYPE_SIZE (TREE_VALUE (formal_type)));
-                /* Must round up to include padding.  This is done the same
-                   way as in store_one_arg.  */
-                parm_size = ((parm_size + PARM_BOUNDARY - 1) / PARM_BOUNDARY * PARM_BOUNDARY);
-                total += parm_size;
-                formal_type = TREE_CHAIN (formal_type);
-              }
-          }
-
-      id = DECL_ASSEMBLER_NAME (decl);
-      oldsym = IDENTIFIER_POINTER (id);
-      newsym = xmalloc (strlen (oldsym) + 11);
-      sprintf (newsym, "*@%s@%d", oldsym, total / BITS_PER_UNIT);
-      SET_DECL_ASSEMBLER_NAME (decl, get_identifier (newsym));
-
-      dfprintf ((stderr, "dbg: fastcall %s -> %s\n", oldsym, newsym));
-    }
-  else
-    rc = 0;
-
-  recurse--;
-  return rc;
-}
-
 void
 emx_eh_frame_section ()
 {
@@ -321,22 +174,6 @@ i386_emx_init_sections ()
 					 emx_eh_frame_section,
 					 NULL);
 }
-
-#if 0
-static void
-i386_emx_asm_out_destructor (rtx symbol, int priority ATTRIBUTE_UNUSED)
-{
-  /* Tell GNU LD that this is part of the static destructor set.
-     This will work for any system that uses stabs, most usefully
-     aout systems.  */
-  dbxout_begin_simple_stabs ("___DTOR_LIST__", 22 /* N_SETT */);
-  dbxout_stab_value_label (XSTR (symbol, 0));
-  switch_to_section (data_section);
-  ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (PTR_SIZE));
-  fputs ("\t.stabs\t\"___eh_frame__\",24,0,0,Lframe1\n", asm_out_file); /* N_SETD */
-  fputs ("\t.stabs\t\"___ehInit\",1,0,0,0\n", asm_out_file);  /* N_UNDEF | N_EXT */
-}
-#endif
 
 /* Add a __POST$xxx label before epilogue if -mepilogue specified */
 void emx_output_function_begin_epilogue (f)
@@ -525,7 +362,6 @@ i386_emx_valid_dllimport_attribute_p (const_tree decl)
    return true;
 }
 
-#if 0
 /* Return string which is the function name, identified by ID, modified
    with a suffix consisting of an atsign (@) followed by the number of
    bytes of arguments.  If ID is NULL use the DECL_NAME as base. If
@@ -580,6 +416,19 @@ gen_stdcall_or_fastcall_suffix (tree decl, tree id, bool fastcall)
   return get_identifier (new_str);
 }
 
+static tree
+gen_system_suffix (tree decl, tree id)
+{
+  const char *old_str = IDENTIFIER_POINTER (id != NULL_TREE ? id : DECL_NAME (decl));
+  char *new_str, *p;
+  gcc_assert (TREE_CODE (decl) == FUNCTION_DECL);
+
+  p = new_str = XALLOCAVEC (char, 1 + strlen (old_str));
+  *p++ = '*';
+  sprintf (p, "%s", old_str);
+  return get_identifier (new_str);
+}
+
 /* Maybe decorate and get a new identifier for the DECL of a stdcall or
    fastcall function. The original identifier is supplied in ID. */
 
@@ -595,6 +444,8 @@ i386_emx_maybe_mangle_decl_assembler_name (tree decl, tree id)
 	new_id = gen_stdcall_or_fastcall_suffix (decl, id, false);
       else if (lookup_attribute ("fastcall", type_attributes))
 	new_id = gen_stdcall_or_fastcall_suffix (decl, id, true);
+      else if (lookup_attribute ("system", type_attributes))
+	new_id = gen_system_suffix (decl, id);
     }
 
   return new_id;
@@ -611,7 +462,6 @@ i386_emx_mangle_decl_assembler_name (tree decl, tree id)
 
   return (new_id ? new_id : id);
 }
-#endif
 
 void
 i386_emx_encode_section_info (tree decl, rtx rtl, int first ATTRIBUTE_UNUSED)
@@ -706,42 +556,6 @@ i386_emx_encode_section_info (tree decl, rtx rtl, int first ATTRIBUTE_UNUSED)
   SYMBOL_REF_FLAGS (symbol) = flags;
 }
 
-/* [snip] */
-
-#if 0 /* don't think we need this. */
-/* Keep a list of external functions.  */
-
-struct extern_list GTY(())
-{
-  struct extern_list *next;
-  tree decl;
-  const char *name;
-};
-
-static GTY(()) struct extern_list *extern_head;
-
-/* Assemble an external function reference.  We need to keep a list of
-   these, so that we can output the function types at the end of the
-   assembly.  We can't output the types now, because we might see a
-   definition of the function later on and emit debugging information
-   for it then.  */
-
-void
-i386_emx_record_external_function (tree decl, const char *name)
-{
-  dfprintf ((stderr, "trace: i386_emx_record_external_function\n"));
-  struct extern_list *p;
-
-  p = (struct extern_list *) ggc_alloc (sizeof *p);
-  p->next = extern_head;
-  p->decl = decl;
-  p->name = name;
-  extern_head = p;
-}
-#endif
-
-#if 1
-/* i386.c seems to need this for 4.3.2 */
 bool
 i386_emx_binds_local_p (const_tree exp)
 {
@@ -753,7 +567,30 @@ i386_emx_binds_local_p (const_tree exp)
 
   return true;
 }
-#endif
+
+/* Also strip the fastcall prefix and stdcall suffix.  */
+
+const char *
+emx_strip_name_encoding_full (const char *str)
+{
+  dfprintf ((stderr, "trace: i386_emx_strip_name_encoding_full(%s)\n", str));
+  const char *p;
+  const char *ret;
+  const char *name = default_strip_name_encoding (str);
+
+  /* Strip leading '@' on fastcall symbols.  */
+  if (*name == '@')
+    name++;
+
+  /* Strip trailing "@n".  */
+  p = strchr (name, '@');
+  if (p)
+    ret = ggc_alloc_string (name, p - name);
+  else
+    ret = name;
+  dfprintf ((stderr, "trace: emx_strip_name_encoding_full: '%s' -> '%s'\n", str, ret));
+  return ret;
+}
 
 /* Keep a list of exported symbols.  */
 
@@ -769,48 +606,6 @@ struct export_list GTY(())
 };
 
 static GTY(()) struct export_list *export_head;
-
-#if 1
-/* Strip only the leading encoding, leaving the stdcall suffix and fastcall
-   prefix if it exists.  */
-
-const char *
-i386_emx_strip_name_encoding (const char *str)
-{
-  dfprintf ((stderr, "trace: i386_emx_strip_name_encoding(%s)\n", str));
-  if (*str == '%')                      /* don't actually know what this is.. */
-    str += 2;
-  if (*str == '*')
-    str += 1;
-  return str;
-}
-#endif
-/* Also strip the fastcall prefix and stdcall suffix.  */
-
-const char * emx_strip_name_encoding_full (const char *str)
-{
-  dfprintf ((stderr, "trace: i386_emx_strip_name_encoding_full(%s)\n", str));
-  const char *p;
-  const char *ret;
-#if 0
-  const char *name = default_strip_name_encoding (str);
-#else
-  const char *name = i386_emx_strip_name_encoding (str);
-#endif
-
-  /* Strip leading '@' on fastcall symbols.  */
-  if (*name == '@')
-    name++;
-
-  /* Strip trailing "@n".  */
-  p = strchr (name, '@');
-  if (p)
-    ret = ggc_alloc_string (name, p - name);
-  else
-    ret = name;
-  dfprintf ((stderr, "trace: emx_strip_name_encoding_full: '%s' -> '%s'\n", str, ret));
-  return ret;
-}
 
 void
 i386_emx_asm_output_aligned_decl_common (FILE *stream, tree decl,

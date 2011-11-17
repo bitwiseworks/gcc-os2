@@ -38,6 +38,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define DLL_IMPORT_EXPORT_PREFIX '#'
 
+#define TARGET_MANGLE_DECL_ASSEMBLER_NAME i386_emx_mangle_decl_assembler_name
+
 /* Debug formats */
 #define DEFAULT_GDB_EXTENSIONS          1
 #define DBX_DEBUGGING_INFO              1
@@ -123,18 +125,6 @@ Boston, MA 02111-1307, USA.  */
 /* We want the _Optlink attribute */
 #define TARGET_OPTLINK_DECL_ATTRIBUTES
 
-/* Do our own mangling on some kinds of decls */
-#define TARGET_C_SET_DECL_ASSEMBLER_NAME(decl) \
-  emx_c_set_decl_assembler_name (decl, 0)
-
-#if 0
-#define TARGET_CXX_SET_DECL_ASSEMBLER_NAME(decl) \
-  (emx_c_set_decl_assembler_name (decl, DECL_LANG_SPECIFIC(decl) && DECL_FUNCTION_MEMBER_P (decl)))
-#else
-#define TARGET_CXX_SET_DECL_ASSEMBLER_NAME(decl) \
-  emx_c_set_decl_assembler_name (decl, 0)
-#endif
-
 /* #631: Hack (temporary, will be fixed properly 3.4.x it seems) for _Optlink and
    _System functions which returns structures. (breaks some tcpip stuff.) */
 #define RETURN_IN_MEMORY_WITH_FNTYPE    emx_return_in_memory_with_fntype
@@ -142,10 +132,6 @@ Boston, MA 02111-1307, USA.  */
 /* For Win32 ABI compatibility. */
 #define DEFAULT_PCC_STRUCT_RETURN       0
 
-#if 0 /* 2009-05-03 */
-/* No data type wants to be aligned rounder than this.  */
-#define BIGGEST_ALIGNMENT               128
-#endif
 /* Win32 complier aligns internal doubles in structures on dword boundaries.
    We need to emulate this behaviour for easier porting. */
 #define BIGGEST_FIELD_ALIGNMENT         64
@@ -303,7 +289,6 @@ do {							\
 extern int emx_c_set_decl_assembler_name PARAMS ((tree, int));
 
 extern int emx_return_in_memory_with_fntype PARAMS ((tree type, tree fntype));
-const char *i386_emx_strip_name_encoding PARAMS ((const char *str));
 extern const char * emx_strip_name_encoding_full PARAMS ((const char *));
 extern void emx_eh_frame_section (void);
 extern void emx_output_function_begin_epilogue (FILE *);
