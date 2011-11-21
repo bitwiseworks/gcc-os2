@@ -632,7 +632,8 @@ decl_attributes (tree *node, tree attributes, int flags,
 	{
 	  if (TREE_CODE (*anode) == POINTER_TYPE
 	      && (TREE_CODE (TREE_TYPE (*anode)) == FUNCTION_TYPE
-		  || TREE_CODE (TREE_TYPE (*anode)) == METHOD_TYPE))
+		  || TREE_CODE (TREE_TYPE (*anode)) == METHOD_TYPE)
+              && !(flags & (int) ATTR_FLAG_FUNCTION_NEXT))
 	    {
 	      /* OK, this is a bit convoluted.  We can't just make a copy
 		 of the pointer type and modify its TREE_TYPE, because if
