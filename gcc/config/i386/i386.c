@@ -53,6 +53,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "explow.h"
 #include "expr.h"
 #include "cfgrtl.h"
+#ifdef __EMX__
+#include "cp/cp-tree.h" /* we need SET_DECL_LANGUAGE */
+#endif
 #include "common/common-target.h"
 #include "langhooks.h"
 #include "reload.h"
@@ -6469,6 +6472,25 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
     }
 
   /* Can combine sseregparm with all attributes.  */
+
+#ifdef __EMX__
+  /* Be compatible with IBM VAC and imply `extern "C"' for certain calling
+     conventions when they are used on functions in C++ code.  It may be a good
+     idea to use a target-specific compiler option for that in the future.  */
+  if (is_attribute_p ("system", name) ||
+      is_attribute_p ("optlink", name) ||
+      is_attribute_p ("stdcall", name) ||
+      is_attribute_p ("cdecl", name))
+    {
+      if (TREE_CODE (*node) == FUNCTION_TYPE && (flags & ATTR_FLAG_HANDLER_DECL_FOLLOWS))
+        {
+          /* Pick up the original node's DECL (node[1] is last_decl).  */
+          tree decl = node[2];
+          if (TREE_CODE (decl) == FUNCTION_DECL && DECL_LANG_SPECIFIC (decl))
+            SET_DECL_LANGUAGE (decl, lang_c);
+        }
+    }
+#endif
 
   return NULL_TREE;
 }

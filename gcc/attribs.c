@@ -714,10 +714,15 @@ decl_attributes (tree *node, tree attributes, int flags,
 	  /* Pass in an array of the current declaration followed
 	     by the last pushed/merged declaration if  one exists.
 	     If the handler changes CUR_AND_LAST_DECL[0] replace
-	     *ANODE with its value.  */
-	  tree cur_and_last_decl[] = { *anode, last_decl };
+	     *ANODE with its value.
+
+	     Also, we may have replaced decl with its type (see above).
+	     Supply the original decl to the handler following the replacing
+	     type.  This is used by handlers of some targets to alter function
+	     decls depending on function type attributes.  */
+	  tree cur_and_last_decl[] = { *anode, last_decl, *node };
 	  tree ret = (spec->handler) (cur_and_last_decl, name, args,
-				      flags|cxx11_flag, &no_add_attrs);
+				      flags|cxx11_flag|ATTR_FLAG_HANDLER_DECL_FOLLOWS, &no_add_attrs);
 
 	  *anode = cur_and_last_decl[0];
 	  if (ret == error_mark_node)

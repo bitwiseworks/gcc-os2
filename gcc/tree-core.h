@@ -829,7 +829,10 @@ enum attribute_flags {
      are not in fact compatible with the function type.  */
   ATTR_FLAG_BUILT_IN = 16,
   /* A given attribute has been parsed as a C++-11 attribute.  */
-  ATTR_FLAG_CXX11 = 32
+  ATTR_FLAG_CXX11 = 32,
+  /* The attribute handler's node argument contains the original DECL of node
+     as its third argument (the second argumentis always last_decl).  */
+  ATTR_FLAG_HANDLER_DECL_FOLLOWS = 256
 };
 
 /* Types used to represent sizes.  */
