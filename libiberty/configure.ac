@@ -697,6 +697,7 @@ case "${host}" in
      *-*-mingw* | *-*-winnt*)	pexecute=pex-win32  ;;
      *-*-msdosdjgpp*)		pexecute=pex-djgpp  ;;
      *-*-msdos*)		pexecute=pex-msdos  ;;
+     *-*-os2*)			pexecute=pex-djgpp  ;;
      *)				pexecute=pex-unix   ;;
 esac
 AC_SUBST(pexecute)
