@@ -31,7 +31,7 @@ SHLIB_MULTINAME = $(SHLIB_BASENAME)
 SHLIB_DLLNAME   = $(SHLIB_MULTINAME).dll
 SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
 	$(REXX) dllar.cmd -o $(SHLIB_DLLNAME) \
-	-ordinal @multilib_flags@ -nocrtdll \
+	-nolxlite @multilib_flags@ -nocrtdll \
 	-flags "-Zhigh-mem -Zomf -g" \
 	-ex "___main ___do_global_* ___ctordtor* ___eh* ___pop* _DLL_InitTerm" \
 	-d "GNU GCC Runtime Version $(gcc_version)" \
