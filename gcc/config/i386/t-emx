@@ -32,10 +32,11 @@ SHLIB_DLLNAME   = $(SHLIB_MULTINAME).dll
 SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
 	$(REXX) dllar.cmd -o $(SHLIB_DLLNAME) \
 	-nolxlite @multilib_flags@ -nocrtdll \
-	-flags "-Zhigh-mem -Zomf -g" \
+	-flags "-Zmap -Zhigh-mem -Zomf -g" \
 	-ex "___main ___do_global_* ___ctordtor* ___eh* ___pop* _DLL_InitTerm" \
 	-d "GNU GCC Runtime Version $(gcc_version)" \
-	-libf "INITINSTANCE TERMGLOBAL" \
+	-libf "INITINSTANCE TERMINSTANCE" \
+	-libd "DATA MULTIPLE" \
 	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o \
     && ln -s -f $(SHLIB_BASENAME).a libgcc_so_d.a \
     && touch $$@
@@ -65,7 +66,6 @@ LIB1ASMFUNCS    = _alloca
 LIB2FUNCS_EXTRA = $(srcdir)/config/i386/emx-ctordtor.c
 LIB2ADDEH       = \
     $(srcdir)/config/i386/emx-eh.c \
-    $(srcdir)/config/i386/emx-dllinit.c \
     $(srcdir)/unwind-dw2.c \
     $(srcdir)/unwind-dw2-fde.c \
     $(srcdir)/unwind-sjlj.c \
