@@ -200,12 +200,22 @@ pex_djgpp_exec_child (struct pex_obj *obj, int flags, const char *executable,
 	}
     }
 
+#ifdef __EMX__
+  /* this returns pid instead of status! */
+  if (env)
+    status = (((flags & PEX_SEARCH) != 0 ? spawnvpe : spawnve)
+	      (P_NOWAIT, executable, argv, env));
+  else
+    status = (((flags & PEX_SEARCH) != 0 ? spawnvp : spawnv)
+	      (P_NOWAIT, executable, argv));
+#else
   if (env)
     status = (((flags & PEX_SEARCH) != 0 ? spawnvpe : spawnve)
 	      (P_WAIT, executable, argv, env));
   else
     status = (((flags & PEX_SEARCH) != 0 ? spawnvp : spawnv)
   	      (P_WAIT, executable, argv));
+#endif
 
   if (status == -1)
     {
@@ -262,6 +272,13 @@ pex_djgpp_exec_child (struct pex_obj *obj, int flags, const char *executable,
 	}
     }
 
+#ifdef __EMX__
+  if (status == -1)
+    {
+	  return (pid_t) -1;
+    }
+#endif
+
   /* Save the exit status for later.  When we are called, obj->count
      is the number of children which have executed before this
      one.  */
@@ -272,6 +289,37 @@ pex_djgpp_exec_child (struct pex_obj *obj, int flags, const char *executable,
 
   return (pid_t) obj->count;
 }
+
+#ifdef __EMX__
+
+#include <sys/resource.h>
+#include <sys/signal.h>
+#include <sys/wait.h>
+
+static pid_t
+pex_wait (struct pex_obj *obj ATTRIBUTE_UNUSED, pid_t pid, int *status,
+	  struct pex_time *time)
+{
+  pid_t ret;
+  struct rusage r;
+
+  if (time == NULL)
+    return waitpid (pid, status, 0);
+
+  ret = wait4 (pid, status, 0, &r);
+
+  if (time != NULL)
+    {
+      time->user_seconds = r.ru_utime.tv_sec;
+      time->user_microseconds= r.ru_utime.tv_usec;
+      time->system_seconds = r.ru_stime.tv_sec;
+      time->system_microseconds= r.ru_stime.tv_usec;
+    }
+
+  return ret;
+}
+
+#endif /* __EMX__ */
 
 /* Wait for a child process to complete.  Actually the child process
    has already completed, and we just need to return the exit
@@ -284,12 +332,30 @@ pex_djgpp_wait (struct pex_obj *obj, pid_t pid, int *status,
 		int *err ATTRIBUTE_UNUSED)
 {
   int *statuses;
+#ifdef __EMX__
+  pid_t _pid;
+#endif
 
   if (time != NULL)
     memset (time, 0, sizeof *time);
 
   statuses = (int *) obj->sysdep;
+#ifdef __EMX__
+  _pid = statuses[pid];
+  /* If we are cleaning up when the caller didn't retrieve process
+     status for some reason, encourage the process to go away.  */
+  if (done)
+    kill (_pid, SIGTERM);
+
+  if (pex_wait (obj, _pid, status, time) < 0)
+    {
+      *err = errno;
+      *errmsg = "wait";
+      return -1;
+    }
+#else
   *status = statuses[pid];
+#endif
 
   return 0;
 }
