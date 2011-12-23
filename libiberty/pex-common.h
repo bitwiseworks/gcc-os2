@@ -148,5 +148,8 @@ struct pex_funcs
 
 extern struct pex_obj *pex_init_common (int, const char *, const char *,
 					const struct pex_funcs *);
+#ifdef __EMX__
+extern void pex_add_remove (struct pex_obj *, const char *, int);
+#endif
 
 #endif

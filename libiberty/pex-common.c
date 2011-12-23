@@ -43,7 +43,9 @@ extern int mkstemps (char *, int);
    (pex_init, pex_run, etc.).  This file is compiled on all
    systems.  */
 
+#ifndef __EMX__
 static void pex_add_remove (struct pex_obj *, const char *, int);
+#endif
 static int pex_get_status_and_time (struct pex_obj *, int, const char **,
 				    int *);
 
@@ -80,7 +82,10 @@ pex_init_common (int flags, const char *pname, const char *tempbase,
 
 /* Add a file to be removed when we are done.  */
 
-static void
+#ifndef __EMX__
+static
+#endif
+void
 pex_add_remove (struct pex_obj *obj, const char *name, int allocated)
 {
   char *add;

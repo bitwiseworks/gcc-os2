@@ -50,6 +50,9 @@ static pid_t pex_djgpp_exec_child (struct pex_obj *, int, const char *,
 static int pex_djgpp_close (struct pex_obj *, int);
 static pid_t pex_djgpp_wait (struct pex_obj *, pid_t, int *, struct pex_time *,
 			   int, const char **, int *);
+#ifdef __EMX__
+static void pex_djgpp_cleanup (struct pex_obj *obj);
+#endif
 
 /* The list of functions we pass to the common routines.  */
 
@@ -63,7 +66,11 @@ const struct pex_funcs funcs =
   NULL, /* pipe */
   NULL, /* fdopenr */
   NULL, /* fdopenw */
+#ifdef __EMX__
+  pex_djgpp_cleanup
+#else
   NULL  /* cleanup */
+#endif
 };
 
 /* Return a newly initialized pex_obj structure.  */
@@ -201,13 +208,60 @@ pex_djgpp_exec_child (struct pex_obj *obj, int flags, const char *executable,
     }
 
 #ifdef __EMX__
-  /* this returns pid instead of status! */
-  if (env)
-    status = (((flags & PEX_SEARCH) != 0 ? spawnvpe : spawnve)
-	      (P_NOWAIT, executable, argv, env));
-  else
-    status = (((flags & PEX_SEARCH) != 0 ? spawnvp : spawnv)
-	      (P_NOWAIT, executable, argv));
+  /* command line cannot exceed 32KB, DosExecPgm limit */
+  {
+    char* argv_rsp[3];
+    char** _argv = argv;
+    char* arg = _argv[0];
+    char rsp_arg[_MAX_PATH];
+    int i = 0;
+    int arglen = 0;
+
+    while( (arg = _argv[i]) != NULL)
+      {
+        arglen += strlen( arg) + 1;
+        i++;
+      }
+
+    /* safe len check */
+    if (arglen > (30*1024))
+      {
+        /* create temporary file */
+        char* rsp = tempnam( NULL, "grsp");
+        FILE* out = fopen( rsp, "w");
+        if (out == NULL)
+          {
+            *err = errno;
+            *errmsg = "tempnam";
+            return (pid_t) -1;
+          }
+        /* dump arguments, skip program name */
+        i = 1;
+        while( (arg = _argv[i]) != NULL)
+          {
+            fprintf( out, "%s\n", arg);
+            i++;
+          }
+        fclose( out);
+        /* new command line args */
+        argv_rsp[0] = _argv[0];
+        sprintf( rsp_arg, "@%s", rsp);
+        argv_rsp[1] = rsp_arg;
+        argv_rsp[2] = NULL;
+        /* add it for automatic cleanup */
+        pex_add_remove( obj, rsp, 1);
+        /* use new argv */
+        _argv = argv_rsp;
+      }
+
+    /* this returns pid instead of status! */
+    if (env)
+      status = (((flags & PEX_SEARCH) != 0 ? spawnvpe : spawnve)
+                (P_NOWAIT, executable, _argv, env));
+    else
+      status = (((flags & PEX_SEARCH) != 0 ? spawnvp : spawnv)
+                (P_NOWAIT, executable, _argv));
+  }
 #else
   if (env)
     status = (((flags & PEX_SEARCH) != 0 ? spawnvpe : spawnve)
@@ -359,3 +413,14 @@ pex_djgpp_wait (struct pex_obj *obj, pid_t pid, int *status,
 
   return 0;
 }
+
+#ifdef __EMX__
+static void
+pex_djgpp_cleanup (struct pex_obj *obj ATTRIBUTE_UNUSED)
+{
+  if (obj->sysdep != NULL)
+    {
+      free (obj->sysdep);
+    }
+}
+#endif
