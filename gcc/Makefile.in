@@ -3078,13 +3078,13 @@ s-fixinc_list : $(GCC_PASSES)
 # Because of CCACHE_HARDLINK, this will also update the timestamp in
 # the build tree, and so fixincl in the build tree will appear to be
 # out of date.  Yuck.
-../$(build_subdir)/fixincludes/fixincl: ; @ :
+../$(build_subdir)/fixincludes/fixincl$(exeext): ; @ :
 
 # Build fixed copies of system files.
 # Abort if no system headers available, unless building a crosscompiler.
 # FIXME: abort unless building --without-headers would be more accurate and less ugly
 stmp-fixinc: gsyslimits.h macro_list fixinc_list \
-  $(build_objdir)/fixincludes/fixincl \
+  $(build_objdir)/fixincludes/fixincl$(exeext) \
   $(build_objdir)/fixincludes/fixinc.sh
 	rm -rf include-fixed; mkdir include-fixed
 	-chmod a+rx include-fixed
