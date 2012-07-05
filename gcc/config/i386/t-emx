@@ -56,6 +56,9 @@ STMP_FIXPROTO   =
 # Override libgcc2 C flags to ensure stack probing and epilogues.
 TARGET_LIBGCC2_CFLAGS = -Zaout -O2 -fomit-frame-pointer -Wall -DNDEBUG
 
+# Allocate enough stack and use high memory
+T_CFLAGS = -Zstack 8192 -Zhigh-mem
+
 # Provide alternative source code for libgcc1
 LIBGCC1         = libgcc1-asm.a
 CROSS_LIBGCC1   = libgcc1-asm.a
