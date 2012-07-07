@@ -365,9 +365,6 @@ pex_wait (struct pex_obj *obj ATTRIBUTE_UNUSED, pid_t pid, int *status,
   pid_t ret;
   struct rusage r;
 
-  if (time == NULL)
-    return waitpid (pid, status, 0);
-
   ret = wait4 (pid, status, 0, &r);
 
   if (time != NULL)
@@ -376,6 +373,19 @@ pex_wait (struct pex_obj *obj ATTRIBUTE_UNUSED, pid_t pid, int *status,
       time->user_microseconds= r.ru_utime.tv_usec;
       time->system_seconds = r.ru_stime.tv_sec;
       time->system_microseconds= r.ru_stime.tv_usec;
+    }
+
+  /* Suppress 'Internal error: Interrupt' caused by Ctrl-C and Ctrl-Break */
+  if (status && WIFSIGNALED (*status))
+    {
+      switch (WTERMSIG (*status))
+        {
+        case SIGINT:      /* Ctrl-C */
+        case SIGBREAK:    /* Ctrl-Break */
+          /* Clear a signaled status and use SIGINT as a return code */
+          *status = SIGINT << 8;
+          break;
+        }
     }
 
   return ret;
