@@ -51,6 +51,9 @@ static int pex_djgpp_close (struct pex_obj *, int);
 static pid_t pex_djgpp_wait (struct pex_obj *, pid_t, int *, struct pex_time *,
 			   int, const char **, int *);
 #ifdef __EMX__
+static int pex_djgpp_pipe (struct pex_obj *, int *, int);
+static FILE *pex_djgpp_fdopenr (struct pex_obj *, int, int);
+static FILE *pex_djgpp_fdopenw (struct pex_obj *, int, int);
 static void pex_djgpp_cleanup (struct pex_obj *obj);
 #endif
 
@@ -63,13 +66,16 @@ const struct pex_funcs funcs =
   pex_djgpp_exec_child,
   pex_djgpp_close,
   pex_djgpp_wait,
+#ifndef __EMX__
   NULL, /* pipe */
   NULL, /* fdopenr */
   NULL, /* fdopenw */
-#ifdef __EMX__
-  pex_djgpp_cleanup
-#else
   NULL  /* cleanup */
+#else
+  pex_djgpp_pipe,
+  pex_djgpp_fdopenr,
+  pex_djgpp_fdopenw,
+  pex_djgpp_cleanup
 #endif
 };
 
@@ -78,8 +84,10 @@ const struct pex_funcs funcs =
 struct pex_obj *
 pex_init (int flags, const char *pname, const char *tempbase)
 {
+#ifndef __EMX__
   /* DJGPP does not support pipes.  */
   flags &= ~ PEX_USE_PIPES;
+#endif
   return pex_init_common (flags, pname, tempbase, &funcs);
 }
 
@@ -415,6 +423,39 @@ pex_djgpp_wait (struct pex_obj *obj, pid_t pid, int *status,
 }
 
 #ifdef __EMX__
+#include <io.h>
+
+/* Create a pipe.  */
+
+static int
+pex_djgpp_pipe (struct pex_obj *obj ATTRIBUTE_UNUSED, int *p, int binary)
+{
+  if (pipe (p))
+    return -1;
+
+  setmode (p[0], binary ? O_BINARY : O_TEXT);
+  setmode (p[1], binary ? O_BINARY : O_TEXT);
+
+  return 0;
+}
+
+/* Get a FILE pointer to read from a file descriptor.  */
+
+static FILE *
+pex_djgpp_fdopenr (struct pex_obj *obj ATTRIBUTE_UNUSED, int fd, int binary)
+{
+  return fdopen (fd, binary ? "rb" : "rt");
+}
+
+static FILE *
+pex_djgpp_fdopenw (struct pex_obj *obj ATTRIBUTE_UNUSED, int fd, int binary)
+{
+  if (fcntl (fd, F_SETFD, FD_CLOEXEC) < 0)
+    return NULL;
+
+  return fdopen (fd, binary ? "wb" : "wt");
+}
+
 static void
 pex_djgpp_cleanup (struct pex_obj *obj ATTRIBUTE_UNUSED)
 {
