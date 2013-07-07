@@ -69,10 +69,8 @@ Boston, MA 02111-1307, USA.  */
 /* Enable parsing of #pragma pack(push,<n>) and #pragma pack(pop).  */
 #define HANDLE_PRAGMA_PACK_PUSH_POP     1
 
-/* Enable #pragma weak (in the limited way OS/2 supports them). */
-#define HANDLE_PRAGMA_WEAK              1
-
-/* We support kind of weak symbols */
+/* We support weak symbols (in the limited way OS/2 supports them).
+   This also enables #pragma weak handling.  */
 #define SUPPORTS_WEAK                   1
 
 /* We support weak style link-once semantics.  */
