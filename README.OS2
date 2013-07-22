@@ -1,0 +1,58 @@
+GCC for OS/2
+============
+
+This repository contains the GCC source code with the patches needed to build it
+on the eComStation (OS/2) operating system. One day all patches will be merged
+upstream but currently it is more convenient for the developers to track them
+separately.
+
+Build instructions
+------------------
+
+These instructions assume you have the RPM/YUM environment installed.
+See http://svn.netlabs.org/rpm for details.
+
+1. Install the necessary packages from RPM with:
+
+        yum install os2-base-fhs ash gcc gcc-wlink gcc-wrc grep gmp-devel mpfr-devel gettext-devel diffutils gawk flex sed
+
+2. Make a build directory outside the source tree.
+
+3. Change to that directory and run configure & make using the following
+   SH script (tailor it to your needs, check also step 4 below):
+
+        export LANG=C
+
+        export SHELL=sh
+        export CONFIG_SHELL=$SHELL
+        export MAKESHELL=$SHELL
+
+        export PATH=`echo $PATH | sed -e 's@\\\\@/@g'`
+        export ac_executable_extensions='.exe'
+
+        export CFLAGS='-O2 -march=pentium -mtune=pentium4'
+        export CXXFLAGS='-O2 -march=pentium -mtune=pentium4'
+        export LDFLAGS='-Zomf -Zmap -Zargs-wild -Zhigh-mem -s'
+
+        # Make sure xgcc will find its own cc1/cc1plus instead of the host ones
+        export PATH="<PATH_TO_BUILD>/gcc${PATH:+;$PATH}"
+
+        # Make sure programs linked with xgcc will find the correct gccXXX.dll
+        export BEGINLIBPATH="<PATH_TO_BUILD>/gcc${BEGINLIBPATH:+;$BEGINLIBPATH}"
+
+        <PATH_TO_SRC>/configure \
+            --with-sysroot=/@unixroot \
+            --prefix=<PATH_TO_BUILD>/install \
+            --enable-shared \
+            --enable-languages=c,c++ \
+            --with-gnu-as \
+            --disable-bootstrap \
+            --disable-multilib \
+            --disable-libstdcxx-pch \
+            --enable-threads
+
+        make SYSTEM_HEADER_DIR=$UNIXROOT/usr/include
+
+        make install
+
+4. Autoconf is hell.
