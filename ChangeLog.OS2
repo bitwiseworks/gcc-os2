@@ -1,6 +1,11 @@
 This file contains OS/2-specific changes to GCC that are not part of upstream
 and its ChangeLog.
 
+4.4.6 OS/2 Release 17 (2013-07-25)
+----------------------------------
+  - Fix Release 16 regression that would break output file name computation
+    for the `gcc test.c -lpthread` case.
+
 4.4.6 OS/2 Release 16 (2013-07-23)
 ----------------------------------
 
