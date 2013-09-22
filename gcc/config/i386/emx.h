@@ -222,25 +222,9 @@ do {						\
 #define ASM_APP_OFF                     "#NO_APP\n"
 
 /* Output a common block.  */
-#if 1
-#undef ASM_OUTPUT_ALIGNED_DECL_COMMON
-#define ASM_OUTPUT_ALIGNED_DECL_COMMON(STREAM, DECL, NAME, SIZE, ALIGN)	\
-do {							\
-      i386_emx_maybe_record_exported_symbol (DECL, NAME, 1 EMX_DBG_LOC_INARGS);	\
-							\
-      /* 16 is the best we can do (segment para). */    \
-      const int xalign = (ALIGN) > 16 ? 16 : (ALIGN);   \
-      fprintf ((STREAM), "\t.comm\t"); 			\
-      assemble_name ((STREAM), (NAME));			\
-      fprintf ((STREAM), ", %d\t%s %d\n",		\
-	       (((SIZE) + xalign - 1) / xalign) * xalign, \
-               ASM_COMMENT_START, (SIZE));	        \
-} while (0)
-#else
 #undef ASM_OUTPUT_ALIGNED_DECL_COMMON
 #define ASM_OUTPUT_ALIGNED_DECL_COMMON \
   i386_emx_asm_output_aligned_decl_common
-#endif
 
 /* Output the label for an initialized variable.  */
 #undef ASM_DECLARE_OBJECT_NAME

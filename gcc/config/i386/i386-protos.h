@@ -382,6 +382,10 @@ extern section *emx_function_section (tree decl ATTRIBUTE_UNUSED,
                                       enum node_frequency freq ATTRIBUTE_UNUSED,
                                       bool startup ATTRIBUTE_UNUSED,
                                       bool exit ATTRIBUTE_UNUSED);
+extern void i386_emx_asm_output_aligned_decl_common (FILE *, tree,
+						    const char *,
+						    HOST_WIDE_INT,
+						    HOST_WIDE_INT);
 
 /* In emx-cxx.c  */
 extern void i386_emx_adjust_class_at_definition (tree);
