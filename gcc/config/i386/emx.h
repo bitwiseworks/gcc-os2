@@ -568,93 +568,13 @@ do {									\
 /******************************************************************************
  *                             - I - N - I - T -
  ******************************************************************************/
+extern void emx_driver_init (unsigned int *,struct cl_decoded_option **);
+#define GCC_DRIVER_HOST_INITIALIZATION \
+        emx_driver_init (&decoded_options_count, &decoded_options)
 
-#define EMX_INITIALIZE_ENVIRONMENT(taildirs)                                   \
-  /* Set env.vars GCC_ROOT, G++_ROOT and BINUTILS_ROOT.  */                    \
-  {                                                                            \
-  int fGCC = !getenv ("GCC_ROOT");                                             \
-  int fGPP = !getenv ("G++_ROOT");                                             \
-  int fBIN = !getenv ("BINUTILS_ROOT");                                        \
-  if (fGCC || fGPP || fBIN)                                                    \
-    {                                                                          \
-      char root_path [260];                                                    \
-      if (!_execname (root_path, sizeof (root_path)))                          \
-      {                                                                        \
-        int i;                                                                 \
-        for (i = 0; i < taildirs; i++)                                         \
-          {                                                                    \
-            char *name = _getname (root_path);                                 \
-            if (name > root_path)                                              \
-              {                                                                \
-                if (i < taildirs - 1)                                          \
-                  name--;                                                      \
-                if (*name != ':')                                              \
-                  *name = '\0';                                                \
-              }                                                                \
-          }                                                                    \
-        if (fGCC)                                                              \
-          setenv ("GCC_ROOT", root_path, 1);                                   \
-        if (fGPP)                                                              \
-          setenv ("G++_ROOT", root_path, 1);                                   \
-        if (fGCC)                                                              \
-          setenv ("BINUTILS_ROOT", root_path, 1);                              \
-      }                                                                        \
-    }                                                                          \
-  }
 
-/* emxomf does not understand stabs+, so for frontends we have to
-   switch to standard stabs if -Zomf is used. We also do many other
-   argv preprocessing here. */
-#define GCC_DRIVER_HOST_INITIALIZATION                                         \
-  {                                                                            \
-    int i, j, new_argc, max_argc;                                              \
-    const char **new_argv;                                                     \
-    _emxload_env ("GCCLOAD");                                                  \
-    _envargs (&argc, (char ***)&argv, "GCCOPT");                               \
-    _response (&argc, (char ***)&argv);                                        \
-    _wildcard (&argc, (char ***)&argv);                                        \
-                                                                               \
-    /* Copy argv into a new location and modify it while copying */            \
-    new_argv = (const char **)xmalloc ((max_argc = argc) * sizeof (char *));    \
-    new_argv [0] = argv [0];                                                   \
-    for (i = 1, new_argc = 1; i < argc; i++)                                   \
-      {                                                                        \
-        int         arg_count = 1;                                             \
-        const char *arg [4];                                                   \
-        arg [0] = argv [i];                                                    \
-        if (!strcmp (argv [i], "-Zcrtdll"))                                    \
-          arg [0] = "-Zcrtdll=c_dll";                                          \
-        else if (!strcmp (argv [i], "-Zlinker"))                               \
-          {                                                                    \
-            if (i + 1 >= argc)                                                 \
-                fatal ("argument to `-Zlinker' is missing");                   \
-            arg [0] = "-Xlinker";                                              \
-            arg [1] = "-O";                                                    \
-            arg [2] = "-Xlinker";                                              \
-            arg [3] = argv [++i];                                              \
-            arg_count = 4;                                                     \
-          }                                                                    \
-        if (new_argc + arg_count > max_argc)                                   \
-            new_argv = (const char **)xrealloc (new_argv,                       \
-                (new_argc + arg_count) * sizeof (char *));                     \
-        for (j = 0; j < arg_count; j++)                                        \
-            new_argv [new_argc++] = arg [j];                                   \
-      }                                                                        \
-    argv = new_argv; argc = new_argc;                                          \
-    EMX_INITIALIZE_ENVIRONMENT(2)                                              \
-  }
 
-/* Do some OS/2-specific work upon initialization of all compilers */
-#define COMPILER_HOST_INITIALIZATION                                           \
-  {                                                                            \
-    /* Preload compiler if specified by GCCLOAD for faster subsequent runs */  \
-    _emxload_env ("GCCLOAD");                                                  \
-    /* Compilers don't fork (thanks God!) so we can use >32MB RAM */           \
-    /* bird: this doesn't matter really as the compiler now should use high */ \
-    /*       memory. But we'll leave it here in case a DLL gets broken. */     \
-    _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);                              \
-    EMX_INITIALIZE_ENVIRONMENT(5)                                              \
-  }
+
 
 /* The following will be defined only when compiling libgcc2
  * to avoid including large .h files when they are not needed.

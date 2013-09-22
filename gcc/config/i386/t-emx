@@ -86,7 +86,6 @@ USER_H          = \
 	 $(srcdir)/ginclude/stdbool.h \
 	 \
 	 $(srcdir)/ginclude/varargs.h \
-	 $(srcdir)/unwind-generic.h \
 	 $(EXTRA_HEADERS)
 
 # bird (#424): New gcc*dll hacks
@@ -102,6 +101,13 @@ emx.o: $(srcdir)/config/i386/emx.c $(RTL_H) $(TREE_H) $(CONFIG_H)
 # how to make the emx-cxx.o object.
 emx-cxx.o: $(srcdir)/config/i386/emx-cxx.c $(RTL_H) $(TREE_H) $(CONFIG_H)
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-cxx.c
+
+# how to make the emx-driver.o object.
+emx-driver.o: $(srcdir)/config/i386/emx-driver.c \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) opts.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	  $(srcdir)/config/i386/emx-driver.c
+
 
 # how to make the emx-stubs.o object.
 emx-stubs.o: $(srcdir)/config/i386/emx-stubs.c $(RTL_H) $(TREE_H) $(CONFIG_H)

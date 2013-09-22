@@ -7351,6 +7351,10 @@ driver::main (int argc, char **argv)
 
   set_progname (argv[0]);
   expand_at_files (&argc, &argv);
+#ifdef __EMX__
+  _envargs (&argc, &argv, "GCCOPT");
+  _wildcard (&argc, &argv);
+#endif
   decode_argv (argc, const_cast <const char **> (argv));
   global_initializations ();
   build_multilib_strings ();
