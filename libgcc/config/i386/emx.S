@@ -24,6 +24,8 @@
  *
  */
 
+#include "auto-host.h"
+
         .text
 
 #ifdef L_alloca
@@ -32,6 +34,7 @@
 // OUT:  ESP adjusted down by EAX, stack probed
 // NOTE: Never call this from C!
 // CHG:  EAX. ESP
+__chkstk:
 __alloca:
         /*
          * Calc new %esp, store it in %eax.
@@ -71,3 +74,30 @@ ___POST$_alloca:
 #endif
         jmp     *%eax                   /* return */
 #endif // L_alloca
+
+/* implementation borrowed from cygwin.asm */
+#ifdef L_chkstk_ms
+/* ___chkstk_ms is a *special* function call, which uses %rax as the argument.
+   We avoid clobbering any registers.  Unlike ___chkstk, it just probes the
+   stack and does no stack allocation.  */
+	.global ___chkstk_ms
+___chkstk_ms:
+	pushl	%ecx			/* save temp */
+	pushl	%eax
+	cmpl	$0x1000, %eax		/* > 4k ?*/
+	leal	12(%esp), %ecx		/* point past return addr */
+	jb	2f
+
+1:	subl	$0x1000, %ecx  		/* yes, move pointer down 4k*/
+	orl	$0x0, (%ecx)   		/* probe there */
+	subl	$0x1000, %eax  	 	/* decrement count */
+	cmpl	$0x1000, %eax
+	ja	1b			/* and do it again */
+
+2:	subl	%eax, %ecx
+	orl	$0x0, (%ecx)		/* less than 4k, just peek here */
+
+	popl	%eax
+	popl	%ecx
+	ret
+#endif /* L_chkstk_ms */

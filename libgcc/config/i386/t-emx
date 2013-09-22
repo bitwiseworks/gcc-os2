@@ -58,10 +58,8 @@ STMP_FIXPROTO   =
 TARGET_LIBGCC2_CFLAGS = -Zaout -O2 -fomit-frame-pointer -Wall -DNDEBUG
 
 # Provide alternative source code for libgcc1
-LIBGCC1         = libgcc1-asm.a
-CROSS_LIBGCC1   = libgcc1-asm.a
-LIB1ASMSRC      = i386/emx-libgcc1.asm
-LIB1ASMFUNCS    = _alloca
+LIB1ASMSRC = i386/emx.S
+LIB1ASMFUNCS = _alloca _chkstk_ms
 
 # Extra functions to add to libgcc.
 LIB2FUNCS_EXTRA = $(srcdir)/config/i386/emx-ctordtor.c
