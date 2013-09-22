@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 #include "tree.h"
 #include "flags.h"
 #include "tm_p.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "hashtab.h"
 #include "ggc.h"
 
@@ -261,8 +261,8 @@ ix86_handle_shared_attribute (tree *node, tree name,
   DUMP (*node);
   if (TREE_CODE (*node) != VAR_DECL)
     {
-      warning (OPT_Wattributes, "%qs attribute only applies to variables",
-	       IDENTIFIER_POINTER (name));
+      warning (OPT_Wattributes, "%qE attribute only applies to variables",
+	       name);
       *no_add_attrs = true;
     }
 
@@ -284,8 +284,8 @@ ix86_handle_selectany_attribute (tree *node, tree name,
      initialization later in encode_section_info.  */
   if (TREE_CODE (*node) != VAR_DECL || !TREE_PUBLIC (*node))
     {
-      error ("%qs attribute applies only to initialized variables"
-             " with external linkage",  IDENTIFIER_POINTER (name));
+      error ("%qE attribute applies only to initialized variables"
+             " with external linkage", name);
       *no_add_attrs = true;
     }
 
@@ -309,18 +309,15 @@ static bool
 i386_emx_determine_dllexport_p (tree decl)
 {
   dfprintf((stderr, "i386_emx_determine_dllexport_p\n"));
-  tree assoc;
-
   if (TREE_CODE (decl) != VAR_DECL && TREE_CODE (decl) != FUNCTION_DECL)
+    return false;
+
+  /* Don't export local clones of dllexports.  */
+  if (!TREE_PUBLIC (decl))
     return false;
 
   if (lookup_attribute ("dllexport", DECL_ATTRIBUTES (decl)))
     return true;
-
-  /* Also mark class members of exported classes with dllexport.  */
-  assoc = associated_type (decl);
-  if (assoc && lookup_attribute ("dllexport", TYPE_ATTRIBUTES (assoc)))
-    return i386_emx_type_dllexport_p (decl);
 
   return false;
 }
@@ -336,18 +333,23 @@ i386_emx_determine_dllimport_p (tree decl)
   if (TREE_CODE (decl) != VAR_DECL && TREE_CODE (decl) != FUNCTION_DECL)
     return false;
 
-  /* Lookup the attribute in addition to checking the DECL_DLLIMPORT_P flag.
-     We may need to override an earlier decision.  */
   if (DECL_DLLIMPORT_P (decl))
     return true;
 
   /* The DECL_DLLIMPORT_P flag was set for decls in the class definition
      by  targetm.cxx.adjust_class_at_definition.  Check again to emit
-     warnings if the class attribute has been overridden by an
-     out-of-class definition.  */
+     error message if the class attribute has been overridden by an
+     out-of-class definition of static data.  */
   assoc = associated_type (decl);
-  if (assoc && lookup_attribute ("dllimport", TYPE_ATTRIBUTES (assoc)))
-    return i386_emx_type_dllimport_p (decl);
+  if (assoc && lookup_attribute ("dllimport", TYPE_ATTRIBUTES (assoc))
+      && TREE_CODE (decl) == VAR_DECL
+      && TREE_STATIC (decl) && TREE_PUBLIC (decl)
+      && !DECL_EXTERNAL (decl)
+      /* vtable's are linkonce constants, so defining a vtable is not
+	 an error as long as we don't try to import it too.  */
+      && !DECL_VIRTUAL_P (decl))
+	error ("definition of static data member %q+D of "
+	       "dllimport%'d class", decl);
 
   return false;
 }
@@ -520,7 +522,7 @@ i386_emx_encode_section_info (tree decl, rtx rtl, int first ATTRIBUTE_UNUSED)
 		 ctor is protected by a link-once guard variable, so that
 		 the object still has link-once semantics,  */
 	      || TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (decl)))
-	    make_decl_one_only (decl);
+	    make_decl_one_only (decl, DECL_ASSEMBLER_NAME (decl));
 	  else
 	    error ("%q+D:'selectany' attribute applies only to "
 		   "initialized objects", decl);
@@ -535,24 +537,14 @@ i386_emx_encode_section_info (tree decl, rtx rtl, int first ATTRIBUTE_UNUSED)
   /* Mark the decl so we can tell from the rtl whether the object is
      dllexport'd or dllimport'd.  tree.c: merge_dllimport_decl_attributes
      handles dllexport/dllimport override semantics.  */
-
   flags = (SYMBOL_REF_FLAGS (symbol) &
 	   ~(SYMBOL_FLAG_DLLIMPORT | SYMBOL_FLAG_DLLEXPORT));
 
   if (i386_emx_determine_dllexport_p (decl))
     flags |= SYMBOL_FLAG_DLLEXPORT;
   else if (i386_emx_determine_dllimport_p (decl))
-    {
-      flags |= SYMBOL_FLAG_DLLIMPORT;
-      /* If we went through the associated_type path, this won't already
-	 be set.  Though, frankly, this seems wrong, and should be fixed
-	 elsewhere.  */
-      if (!DECL_DLLIMPORT_P (decl))
-	{
-	  DECL_DLLIMPORT_P (decl) = 1;
-	  flags &= ~SYMBOL_FLAG_LOCAL;
-	}
-    }
+    flags |= SYMBOL_FLAG_DLLIMPORT;
+
   SYMBOL_REF_FLAGS (symbol) = flags;
 }
 
@@ -641,13 +633,19 @@ i386_emx_maybe_record_exported_symbol (tree decl, const char *name, int is_data 
   rtx symbol;
   struct export_list *p;
 
+  if (!decl)
+    return;
+
   symbol = XEXP (DECL_RTL (decl), 0);
   gcc_assert (GET_CODE (symbol) == SYMBOL_REF);
   if (!SYMBOL_REF_DLLEXPORT_P (symbol)){
     return;}
+
   dfprintf ((stderr,
              "trace: i386_emx_maybe_record_exported_symbol: %s %s(%d)\n"
              "           name='%s' is_data=%d\n", EMX_DBG_LOC_RARGS, name, is_data));
+
+  gcc_assert (TREE_PUBLIC (decl));
 
   p = (struct export_list *) xmalloc (sizeof *p);
   p->next = export_head;
@@ -669,8 +667,6 @@ i386_emx_file_end (void)
 {
   dfprintf ((stderr, "trace: emx_file_end\n"));
   struct extern_list *p;
-
-  ix86_file_end ();
 
 #if 0 /* don't think we need this */
   for (p = extern_head; p != NULL; p = p->next)
