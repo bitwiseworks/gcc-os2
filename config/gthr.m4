@@ -15,6 +15,7 @@ case $1 in
     dce)	thread_header=config/pa/gthr-dce.h ;;
     lynx)	thread_header=config/gthr-lynx.h ;;
     mipssde)	thread_header=config/mips/gthr-mipssde.h ;;
+    os2)	thread_header=gthr-os2.h ;;
     posix)	thread_header=gthr-posix.h ;;
     rtems)	thread_header=config/gthr-rtems.h ;;
     single)	thread_header=gthr-single.h ;;

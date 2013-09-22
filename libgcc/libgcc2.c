@@ -2277,7 +2277,7 @@ __do_global_dtors (void)
       (*(p-1)) ();
     }
 #endif
-#if defined (__LIBGCC_EH_FRAME_SECTION_NAME__) && !defined (HAS_INIT_SECTION)
+#if defined (__LIBGCC_EH_FRAME_SECTION_NAME__) && !defined (HAS_INIT_SECTION) && !defined (DONT_AUTOREGISTER_FRAME_INFO)
   {
     static int completed = 0;
     if (! completed)
@@ -2296,7 +2296,7 @@ __do_global_dtors (void)
 void
 __do_global_ctors (void)
 {
-#ifdef __LIBGCC_EH_FRAME_SECTION_NAME__
+#if defined (__LIBGCC_EH_FRAME_SECTION_NAME__) && !defined (DONT_AUTOREGISTER_FRAME_INFO)
   {
     static struct object object;
     __register_frame_info (__EH_FRAME_BEGIN__, &object);
