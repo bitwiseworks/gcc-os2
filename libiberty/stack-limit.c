@@ -39,15 +39,17 @@ Attempt to increase stack size limit to @var{pref} bytes if possible.
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+#ifndef __OS2__
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
+#endif
 #endif
 
 void
 stack_limit_increase (unsigned long pref ATTRIBUTE_UNUSED)
 {
 #if defined(HAVE_SETRLIMIT) && defined(HAVE_GETRLIMIT) \
-    && defined(RLIMIT_STACK) && defined(RLIM_INFINITY)
+    && defined(RLIMIT_STACK) && defined(RLIM_INFINITY) && !defined(__OS2__)
   struct rlimit rlim;
   if (getrlimit (RLIMIT_STACK, &rlim) == 0
       && rlim.rlim_cur != RLIM_INFINITY
