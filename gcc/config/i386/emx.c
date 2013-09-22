@@ -728,3 +728,14 @@ i386_emx_file_end (void)
 	}
     }
 }
+
+/* Always default to .text section.  */
+
+section *
+emx_function_section (tree decl ATTRIBUTE_UNUSED,
+                      enum node_frequency freq ATTRIBUTE_UNUSED,
+                      bool startup ATTRIBUTE_UNUSED,
+                      bool exit ATTRIBUTE_UNUSED)
+{
+  return NULL;
+}

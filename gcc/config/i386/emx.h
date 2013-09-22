@@ -3,7 +3,7 @@
    Copyright (C) 2000(?)-2003 Andrew Zabolotny
    Copyright (C) 2003 InnoTek Systemberatung GmbH
    Copyright (C) 2003-2004 Knut St. Osmundsen
-   Modified for GCC 4.x by Paul Smedley 2008-2011
+   Modified for GCC 4.x by Paul Smedley 2008-2013
 
 This file is part of the InnoTek port of GNU CC.
 

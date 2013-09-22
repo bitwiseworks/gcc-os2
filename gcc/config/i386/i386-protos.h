@@ -378,6 +378,10 @@ extern void i386_emx_init_sections (void);
 extern tree i386_emx_mangle_decl_assembler_name (tree, tree);
 extern void i386_emx_maybe_record_exported_symbol (tree, const char *, int);
 extern bool i386_emx_valid_dllimport_attribute_p (const_tree);
+extern section *emx_function_section (tree decl ATTRIBUTE_UNUSED,
+                                      enum node_frequency freq ATTRIBUTE_UNUSED,
+                                      bool startup ATTRIBUTE_UNUSED,
+                                      bool exit ATTRIBUTE_UNUSED);
 
 /* In emx-cxx.c  */
 extern void i386_emx_adjust_class_at_definition (tree);
