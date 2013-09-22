@@ -75,6 +75,19 @@ Boston, MA 02111-1307, USA.  */
    defaults. (#483) */
 #define SET_ASM_OP                      "\t.set\t"
 
+/* Added 2013-07-31 - fixed dllexport issues with GCC 4.5.x */
+/* This implements the `alias' attribute, keeping any stdcall or
+   fastcall decoration.  */
+#undef  ASM_OUTPUT_DEF_FROM_DECLS
+#define ASM_OUTPUT_DEF_FROM_DECLS(STREAM, DECL, TARGET)                 \
+  do                                                                    \
+    {                                                                   \
+      const char *alias                                                 \
+        = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (DECL));              \
+      i386_emx_maybe_record_exported_symbol (DECL, alias, 0);           \
+      ASM_OUTPUT_DEF (STREAM, alias, IDENTIFIER_POINTER (TARGET));      \
+    } while (0)
+
 /* Support for C++ templates.  */
 #undef MAKE_DECL_ONE_ONLY
 #define MAKE_DECL_ONE_ONLY(DECL)        (DECL_WEAK (DECL) = 1)
