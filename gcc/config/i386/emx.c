@@ -615,9 +615,9 @@ i386_emx_asm_output_aligned_decl_common (FILE *stream, tree decl,
       const int xalign = (align) > 16 ? 16 : (align);
       fprintf ((stream), "\t.comm\t");
       assemble_name ((stream), (name));
-      fprintf ((stream), ", %d\t%s %d\n",
+      fprintf ((stream), ", %d\t# %d\n",
 	       (((size) + xalign - 1) / xalign) * xalign,
-               ASM_COMMENT_START, (size));
+               (size));
   }
 }
 

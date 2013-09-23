@@ -114,6 +114,10 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_ASM_INIT_SECTIONS i386_emx_init_sections
 
+#undef  TARGET_ASM_FUNCTION_SECTION
+#define TARGET_ASM_FUNCTION_SECTION emx_function_section
+#define TARGET_HAVE_NAMED_SECTIONS false
+
 /* Terminate DWARF frame unwind info with a closing zero */
 #define DWARF2_FRAMEINFO_NULL_TERMINATED 1
 
