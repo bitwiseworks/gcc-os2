@@ -184,31 +184,21 @@ Boston, MA 02111-1307, USA.  */
 /* Output a reference to a label.
    We're doing all here since we must get the '*' vs. user_label_prefix
    bit right. */
-#if 1
-#undef ASM_OUTPUT_LABELREF
-#define  ASM_OUTPUT_LABELREF(STREAM, NAME)	\
-do {						\
-  if (((NAME)[0] != FASTCALL_PREFIX) && ((NAME)[0] != '*'))		\
-    fputs (user_label_prefix, (STREAM));	\
-  fputs ((NAME), (STREAM));			\
-} while (0)
-#else
+
 #undef ASM_OUTPUT_LABELREF
 #define ASM_OUTPUT_LABELREF(FILE,NAME) \
   do { \
     const char *xname = (NAME); \
-    if (*xname == '%') \
+    if (*xname == DLL_IMPORT_EXPORT_PREFIX) \
+      xname += 3; \
+    if (*xname == '%') /* used by fastcall */ \
       xname += 2; \
-    if (*xname == '*') \
-      xname += 1; \
-    if (*xname == '*') \
+    if (*xname == '*') /* used by _System */ \
       xname += 1; \
     else \
       fputs (user_label_prefix, FILE); \
     fputs (xname, FILE); \
   } while (0)
-#endif
-
 
 /* Get tree.c to declare a target-specific specialization of
    merge_decl_attributes.  */
