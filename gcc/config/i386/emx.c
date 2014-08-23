@@ -2,7 +2,7 @@
 
 Original version by Eberhard Mattes, based on i386.c.
 Heavily modified by Andrew Zabolotny and Knut St. Osmundsen.
-Modified for GCC 4.x by Paul Smedley 2008-2011
+Modified for GCC 4.x by Paul Smedley 2008-2014
 
 This file is part of GNU CC.
 
