@@ -189,13 +189,11 @@ Boston, MA 02111-1307, USA.  */
 #define ASM_OUTPUT_LABELREF(FILE,NAME) \
   do { \
     const char *xname = (NAME); \
-    if (*xname == DLL_IMPORT_EXPORT_PREFIX) \
+    if (*xname == DLL_IMPORT_EXPORT_PREFIX) /* not sure if this is required anymore, strip the dllimport/export flags when exporting symbols */\
       xname += 3; \
-    if (*xname == '%') /* used by fastcall */ \
-      xname += 2; \
-    if (*xname == '*') /* used by _System */ \
+    if (*xname == '*') /* When dllexport'ing a _System symbol, don't want the '*' */ \
       xname += 1; \
-    else \
+    else if (*xname != FASTCALL_PREFIX) /* adds the _ for non fastcall/_System functions \
       fputs (user_label_prefix, FILE); \
     fputs (xname, FILE); \
   } while (0)
