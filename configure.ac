@@ -510,7 +510,7 @@ if test x$enable_libgomp = x ; then
 	;;
     *-*-solaris2* | *-*-hpux11*)
 	;;
-    *-*-darwin* | *-*-aix*  | i*86-pc-*emx)
+    *-*-darwin* | *-*-aix* )
 	;;
     nvptx*-*-*)
 	;;
