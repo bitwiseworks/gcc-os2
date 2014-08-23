@@ -55,6 +55,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgrtl.h"
 #ifdef __EMX__
 #include "cp/cp-tree.h" /* we need SET_DECL_LANGUAGE */
+#include "dbxout.h"
 #endif
 #include "common/common-target.h"
 #include "langhooks.h"
@@ -6361,10 +6362,12 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
         {
 	  error ("fastcall and regparm attributes are not compatible");
 	}
+
       if (lookup_attribute ("thiscall", TYPE_ATTRIBUTES (*node)))
 	{
 	  error ("regparam and thiscall attributes are not compatible");
 	}
+
 #ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
       if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
         {
@@ -6427,6 +6430,18 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
 	{
 	  error ("fastcall and thiscall attributes are not compatible");
 	}
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("fastcall and system attributes are not compatible");
+	}
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("fastcall and optlink attributes are not compatible");
+	}
+#endif
     }
 
   /* Can combine stdcall with fastcall (redundant), regparm and
@@ -6445,6 +6460,18 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
 	{
 	  error ("stdcall and thiscall attributes are not compatible");
 	}
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("stdcall and system attributes are not compatible");
+	}
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("stdcall and optlink attributes are not compatible");
+	}
+#endif
     }
 
   /* Can combine cdecl with regparm and sseregparm.  */
@@ -6480,18 +6507,115 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
 	{
 	  error ("cdecl and thiscall attributes are not compatible");
 	}
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("system and cdecl attributes are not compatible");
+	}
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("optlink and cdecl attributes are not compatible");
+	}
+#endif
     }
 
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+  else if (is_attribute_p ("system", name))
+    {
+      if (lookup_attribute ("cdecl", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("cdecl and system attributes are not compatible");
+	}
+      if (lookup_attribute ("stdcall", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("stdcall and system attributes are not compatible");
+	}
+      if (lookup_attribute ("fastcall", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("fastcall and system attributes are not compatible");
+	}
+      if (lookup_attribute ("regparm", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("regparm and system attributes are not compatible");
+	}
+      if (lookup_attribute ("sseregparm", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("sseregparm and system attributes are not compatible");
+	}
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("optlink and system attributes are not compatible");
+	}
+#endif
+    }
+#endif
+
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+  else if (is_attribute_p ("optlink", name))
+    {
+      if (lookup_attribute ("cdecl", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("cdecl and optlink attributes are not compatible");
+	}
+      if (lookup_attribute ("stdcall", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("stdcall and optlink attributes are not compatible");
+	}
+      if (lookup_attribute ("fastcall", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("fastcall and optlink attributes are not compatible");
+	}
+      if (lookup_attribute ("regparm", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("regparm and optlink attributes are not compatible");
+	}
+      if (lookup_attribute ("sseregparm", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("sseregparm and optlink attributes are not compatible");
+	}
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("system and optlink attributes are not compatible");
+	}
+#endif
+    }
+#endif
+
   /* Can combine sseregparm with all attributes.  */
+#if defined (TARGET_SYSTEM_DECL_ATTRIBUTES) || defined (TARGET_OPTLINK_DECL_ATTRIBUTES)
+  else if (is_attribute_p ("sseregparm", name))
+    {
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("system and sseregparm attributes are not compatible");
+	}
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("optlink and sseregparm attributes are not compatible");
+	}
+#endif
+    }
+#endif
 
 #ifdef __EMX__
   /* Be compatible with IBM VAC and imply `extern "C"' for certain calling
      conventions when they are used on functions in C++ code.  It may be a good
      idea to use a target-specific compiler option for that in the future.  */
-  if (is_attribute_p ("system", name) ||
+  if (is_attribute_p ("cdecl", name) ||
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      is_attribute_p ("system", name) ||
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
       is_attribute_p ("optlink", name) ||
-      is_attribute_p ("stdcall", name) ||
-      is_attribute_p ("cdecl", name))
+#endif
+      is_attribute_p ("stdcall", name))
     {
       if (TREE_CODE (*node) == FUNCTION_TYPE && (flags & ATTR_FLAG_HANDLER_DECL_FOLLOWS))
         {
@@ -16841,9 +16965,9 @@ get_dllimport_decl (tree decl, bool beimport)
   if (beimport)
     prefix = name[0] == FASTCALL_PREFIX || user_label_prefix[0] == 0
 #ifndef __OS2__
-    ? "*__imp_" : "*__imp__";
+      ? "*__imp_" : "*__imp__";
 #else
-    ? "" : "";
+      ? "" : "";
 #endif
   else
     prefix = user_label_prefix[0] == 0 ? "*.refptr." : "*refptr.";
@@ -16999,6 +17123,7 @@ ix86_legitimize_address (rtx x, rtx, machine_mode mode)
         return tmp;
     }
 #endif
+
   if (flag_pic && SYMBOLIC_CONST (x))
     return legitimize_pic_address (x, 0);
 
