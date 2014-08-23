@@ -417,7 +417,7 @@ gen_stdcall_or_fastcall_suffix (tree decl, tree id, bool fastcall)
 }
 
 static tree
-gen_system_suffix (tree decl, tree id)
+gen_system_or_optlink_prefix (tree decl, tree id)
 {
   const char *old_str = IDENTIFIER_POINTER (id != NULL_TREE ? id : DECL_NAME (decl));
   char *new_str, *p;
@@ -445,7 +445,9 @@ i386_emx_maybe_mangle_decl_assembler_name (tree decl, tree id)
       else if (lookup_attribute ("fastcall", type_attributes))
 	new_id = gen_stdcall_or_fastcall_suffix (decl, id, true);
       else if (lookup_attribute ("system", type_attributes))
-	new_id = gen_system_suffix (decl, id);
+	new_id = gen_system_or_optlink_prefix (decl, id);
+      else if (lookup_attribute ("optlink", type_attributes))
+	new_id = gen_system_or_optlink_prefix (decl, id);
     }
 
   return new_id;
