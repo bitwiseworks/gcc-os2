@@ -54,6 +54,8 @@ Boston, MA 02111-1307, USA.  */
 /* Generate stack probes for allocations bigger than 4000. */
 #define CHECK_STACK_LIMIT               4000
 
+#define MAX_OFILE_ALIGNMENT 32768
+
 /* OS/2 executables ends with .exe, but it's only enforced sometimes... */
 #define TARGET_EXECUTABLE_SUFFIX        ".exe"
 #define NO_FORCE_EXEOBJ_SUFFIX
