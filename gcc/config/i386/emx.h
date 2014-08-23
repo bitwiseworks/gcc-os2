@@ -267,6 +267,9 @@ do {							\
 #define TARGET_CXX_ADJUST_CLASS_AT_DEFINITION i386_emx_adjust_class_at_definition
 #define SUBTARGET_MANGLE_DECL_ASSEMBLER_NAME i386_emx_mangle_decl_assembler_name
 
+/* Static stack checking is supported by means of probes.  */
+#define STACK_CHECK_STATIC_BUILTIN 1
+
 /* External function declarations.  */
 
 extern int emx_c_set_decl_assembler_name PARAMS ((tree, int));
