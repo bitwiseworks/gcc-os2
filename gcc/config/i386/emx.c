@@ -151,7 +151,7 @@ void birddump (tree node, const char *pszFunction)
 #endif
 
 void
-emx_eh_frame_section ()
+emx_eh_frame_section (const void*)
 {
 /*
   tree label = get_file_function_name ('F');
@@ -176,8 +176,7 @@ i386_emx_init_sections ()
 }
 
 /* Add a __POST$xxx label before epilogue if -mepilogue specified */
-void emx_output_function_begin_epilogue (f)
-    FILE *f;
+void emx_output_function_begin_epilogue (FILE *f)
 {
   dfprintf ((stderr, "trace: emx_output_function_begin_epilogue\n"));
   if (TARGET_EPILOGUE && TREE_PUBLIC (current_function_decl))
@@ -203,8 +202,7 @@ void emx_output_function_begin_epilogue (f)
    The return value is 1 to force the return value into memory. Return 0 if we
    don't know. */
 
-int emx_return_in_memory_with_fntype (type, fntype)
-    tree type, fntype;
+int emx_return_in_memory_with_fntype (tree type, tree fntype)
 {
   dfprintf ((stderr, "trace: emx_return_in_memory_with_fntype\n"));
   /* (from aggregate_value_p() CVS trunk) */
