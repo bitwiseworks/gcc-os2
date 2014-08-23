@@ -38,7 +38,8 @@ SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
 	-libf "INITINSTANCE TERMINSTANCE" \
 	-libd "DATA MULTIPLE" \
 	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o \
-    && ln -s -f $(SHLIB_BASENAME).a libgcc_so_d.a \
+    && emximp -o libgcc_so_d.a $(srcdir)/config/i386/emx-libgcc_so_d.def \
+	&& ar rs libgcc_so_d.a __main.o emx-ctordtor.o emx-eh.o _popcountsi2.o _popcount_tab.o\
     && touch $$@
 SHLIB_SUBDIR    = .
 SHLIB_INSTALL   = $$(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_DLLNAME) $$(DESTDIR)$$(slibdir)/ \
@@ -96,21 +97,19 @@ stage1 stage2 stage3 stage4:
 
 # how to make the emx.o object.
 emx.o: $(srcdir)/config/i386/emx.c $(RTL_H) $(TREE_H) $(CONFIG_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx.c
+	$(COMPILER) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx.c
 
 # how to make the emx-cxx.o object.
 emx-cxx.o: $(srcdir)/config/i386/emx-cxx.c $(RTL_H) $(TREE_H) $(CONFIG_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-cxx.c
+	$(COMPILER) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-cxx.c
 
-# how to make the emx-driver.o object.
 emx-driver.o: $(srcdir)/config/i386/emx-driver.c \
   $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(GCC_H) opts.h
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 	  $(srcdir)/config/i386/emx-driver.c
 
-
 # how to make the emx-stubs.o object.
 emx-stubs.o: $(srcdir)/config/i386/emx-stubs.c $(RTL_H) $(TREE_H) $(CONFIG_H)
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-stubs.c
+	$(COMPILER) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/i386/emx-stubs.c
 
 # end-of-file: t-emx
