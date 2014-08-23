@@ -265,7 +265,7 @@ do {							\
 #endif
 #define TARGET_VALID_DLLIMPORT_ATTRIBUTE_P i386_emx_valid_dllimport_attribute_p
 #define TARGET_CXX_ADJUST_CLASS_AT_DEFINITION i386_emx_adjust_class_at_definition
-#define TARGET_MANGLE_DECL_ASSEMBLER_NAME i386_emx_mangle_decl_assembler_name
+#define SUBTARGET_MANGLE_DECL_ASSEMBLER_NAME i386_emx_mangle_decl_assembler_name
 
 /* External function declarations.  */
 
