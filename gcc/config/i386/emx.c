@@ -34,7 +34,12 @@ Boston, MA 02111-1307, USA.  */
 #include "tm_p.h"
 #include "diagnostic-core.h"
 #include "hashtab.h"
+#include "langhooks.h"
 #include "ggc.h"
+#include "target.h"
+#include "except.h"
+#include "stringpool.h"
+#include "varasm.h"
 
 /* The size of the target's pointer type.  */
 #ifndef PTR_SIZE
