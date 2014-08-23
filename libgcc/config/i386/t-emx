@@ -35,7 +35,7 @@ SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
 	-flags "-Zhigh-mem -Zomf -g" \
 	-ex "___main ___do_global_* ___ctordtor* ___eh* _DLL_InitTerm" \
 	-d "GNU GCC Runtime Version $(gcc_version)" \
-	-libf "INITINSTANCE TERMGLOBAL" -lc_alias -lc_dll  \
+	-libf "INITINSTANCE TERMINSTANCE" -lc_alias -lc_dll  \
 	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o \
     && emximp -o libgcc_so_d.a $(SHLIB_BASENAME).def \
 	&& ar rs libgcc_so_d.a __main.o emx-ctordtor.o emx-eh.o \
