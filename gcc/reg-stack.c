@@ -2750,7 +2750,7 @@ convert_regs_entry (void)
     {
       rtx x = DECL_INCOMING_RTL (parm);
       if (STACK_REG_P (x))
-	incoming_arg[REGNO (x) - FIRST_STACK_REG] = x;
+	incoming_arg[REGNO (x) - FIRST_STACK_REG] = (int) x;
       parm = TREE_CHAIN (parm);
     }
 
