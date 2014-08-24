@@ -188,20 +188,19 @@ Boston, MA 02111-1307, USA.  */
    bit right. */
 
 #undef ASM_OUTPUT_LABELREF
-#define ASM_OUTPUT_LABELREF(FILE,NAME) \
-  do { \
-    const char *xname = (NAME); \
-    if (*xname == DLL_IMPORT_EXPORT_PREFIX) /* not sure if this is required anymore, strip the dllimport/export flags when exporting symbols */\
-      xname += 3; \
-    if (*xname == '*') /* When dllexport'ing a _System symbol, don't want the '*' */ \
-      xname += 1; \
-    else if (*xname != FASTCALL_PREFIX) /* adds the _ for non fastcall/_System functions \
-      fputs (user_label_prefix, FILE); \
-    fputs (xname, FILE); \
+#define ASM_OUTPUT_LABELREF(FILE,NAME)       \
+  do {                                       \
+    const char *xname = (NAME);              \
+    if (*xname == DLL_IMPORT_EXPORT_PREFIX)  \
+      xname += 3;                            \
+    if (*xname == '*')                       \
+      xname += 1;                            \
+    else if (*xname != FASTCALL_PREFIX)      \
+      fputs (user_label_prefix, FILE);       \
+    fputs (xname, FILE);                     \
   } while (0)
 
-/* Get tree.c to declare a target-specific specialization of
-   merge_decl_attributes.  */
+/* Get tree.c to declare a target-specific specialization of merge_decl_attributes.  */
 #define TARGET_DLLIMPORT_DECL_ATTRIBUTES 1
 
 #undef SUBTARGET_ENCODE_SECTION_INFO
