@@ -185,6 +185,12 @@ __gthread_recursive_mutex_unlock (__gthread_recursive_mutex_t *mutex)
 }
 
 static inline int
+__gthread_recursive_mutex_destroy (__gthread_recursive_mutex_t *__mutex)
+{
+  return 0;
+}
+
+static inline int
 __gthread_key_create (__gthread_key_t *key, void (*dtor) (void *))
 {
   int iTLS = __libc_TLSAlloc ();
