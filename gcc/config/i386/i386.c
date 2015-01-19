@@ -6485,6 +6485,18 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
         {
 	  error ("fastcall and cdecl attributes are not compatible");
 	}
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("system and cdecl attributes are not compatible");
+	}
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("optlink and cdecl attributes are not compatible");
+	}
+#endif
       if (lookup_attribute ("thiscall", TYPE_ATTRIBUTES (*node)))
 	{
 	  error ("cdecl and thiscall attributes are not compatible");
