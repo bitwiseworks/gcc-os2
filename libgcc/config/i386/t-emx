@@ -3,30 +3,17 @@
 # InnoTek GCC for OS/2 target stuff.
 #
 
-# Native include directory.
-ifdef PATH_IGCC
-NATIVE_SYSTEM_HEADER_DIR = $(subst \,/,$(PATH_IGCC)/include)
-else
-ifdef PATH_EMXPGCC
-NATIVE_SYSTEM_HEADER_DIR = $(subst \,/,$(PATH_EMXPGCC)/include)
-else
-ifdef PATH_EMX
-NATIVE_SYSTEM_HEADER_DIR = $(subst \,/,$(PATH_EMX)/include)
-endif
-endif
-endif
-
 # The version of GCC in this tree
 gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
 
 # DLL version string.
-gccdll_version  = $(subst .,,$(gcc_version))
+SHLIB_SOVERSION = 1
 
 # The command to run REXX scripts (you overload)
 REXX           ?= kRx.exe
 
 # The OS/2 target have shared libgcc, but the names are release specific and constrained by 8.3 limits.
-SHLIB_BASENAME  = gcc$(gccdll_version)
+SHLIB_BASENAME  = gcc$(SHLIB_SOVERSION)
 SHLIB_MULTINAME = $(SHLIB_BASENAME)
 SHLIB_DLLNAME   = $(SHLIB_MULTINAME).dll
 SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
