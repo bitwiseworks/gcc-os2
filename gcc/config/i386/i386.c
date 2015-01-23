@@ -4233,7 +4233,13 @@ ix86_option_override_internal (bool main_args_p,
 	opts->x_flag_omit_frame_pointer
 	  = !(USE_IX86_FRAME_POINTER || opts->x_optimize_size);
       if (opts->x_flag_asynchronous_unwind_tables == 2)
+#ifdef __OS2__
+	/* Don't emit DWARF2 unwind tables on OS/2 by default as it makes no use
+	   of it (this would only add unresolved __ehInit in each object).  */
+	opts->x_flag_asynchronous_unwind_tables = 0;
+#else
 	opts->x_flag_asynchronous_unwind_tables = !USE_IX86_FRAME_POINTER;
+#endif
       if (opts->x_flag_pcc_struct_return == 2)
 	{
 	  /* Intel MCU psABI specifies that -freg-struct-return should
