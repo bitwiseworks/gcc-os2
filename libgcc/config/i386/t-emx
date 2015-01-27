@@ -1,35 +1,36 @@
-# start-of-file: $Id: t-emx 2502 2005-12-18 19:33:33Z bird $
-#
-# InnoTek GCC for OS/2 target stuff.
-#
+# Build a shared libgcc library with a DEF file.
+
+# mkmap-flat.awk is used with the pe_dll option to produce a DEF instead
+# of an ELF map file.
 
 # The version of GCC in this tree
 gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
 
 # DLL version string.
+SHLIB_EXT = .dll
 SHLIB_SOVERSION = 1
-
-# The command to run REXX scripts (you overload)
-REXX           ?= kRx.exe
+SHLIB_MKMAP = $(srcdir)/mkmap-flat.awk
+SHLIB_MAPFILES = libgcc-std.ver $(srcdir)/config/i386/libgcc-glibc.ver
+SHLIB_MKMAP_OPTS = -v pe_dll=gcc$(SHLIB_SOVERSION) -v leading_underscore=1 \
+		-v pe_def="GNU GCC Runtime Version $(gcc_version)-$(RPM_PACKAGE_RELEASE)"
 
 # The OS/2 target have shared libgcc, but the names are release specific and constrained by 8.3 limits.
 SHLIB_BASENAME  = gcc$(SHLIB_SOVERSION)
 SHLIB_MULTINAME = $(SHLIB_BASENAME)
 SHLIB_DLLNAME   = $(SHLIB_MULTINAME).dll
-SHLIB_LINK      = export DLLAR_CMDLINE="@shlib_objs@" && \
-	$(REXX) dllar.cmd -o $(SHLIB_DLLNAME) \
-	-ordinal @multilib_flags@ -nocrtdll \
-	-flags "-Zhigh-mem -Zomf -Zmap -g" \
-	-ex "___main ___do_global_* ___ctordtor* ___eh* _DLL_InitTerm" \
-	-d "GNU GCC Runtime Version $(gcc_version)" \
-	-libf "INITINSTANCE TERMINSTANCE" -lc_alias -lc_dll  \
+SHLIB_LINK      = cp @shlib_map_file@ @shlib_map_file@.def && \
+	$(CC) -g -Zhigh-mem -Zomf -Zmap -Zdll -o $(SHLIB_DLLNAME) \
+	@shlib_map_file@.def @shlib_objs@ \
+	-lc_alias -lc_dll  \
 	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o \
-    && emximp -o libgcc_so_d.a $(SHLIB_BASENAME).def \
+        && emximp -o libgcc_so_d.a $(SHLIB_BASENAME).def \
 	&& ar rs libgcc_so_d.a __main.o emx-ctordtor.o emx-eh.o \
-    && touch $@
+        && emxomf -o libgcc_so_d.lib libgcc_so_d.a \
+        && touch $@
 SHLIB_SUBDIR    = .
 SHLIB_INSTALL   = $(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_DLLNAME) $(DESTDIR)$(slibdir)/ \
     && $(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_BASENAME).a $(DESTDIR)$(libsubdir)/$(SHLIB_SUBDIR)/ \
+    && $(INSTALL_DATA) $(SHLIB_SUBDIR)/libgcc_so_d.lib $(DESTDIR)$(libsubdir)/$(SHLIB_SUBDIR)/ \
     && $(INSTALL_DATA) $(SHLIB_SUBDIR)/libgcc_so_d.a $(DESTDIR)$(libsubdir)/$(SHLIB_SUBDIR)/
 
 # Dont use collect2
