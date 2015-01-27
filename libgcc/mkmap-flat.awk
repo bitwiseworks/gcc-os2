@@ -20,8 +20,17 @@
 
 # Options:
 #   "-v leading_underscore=1" : Symbols in map need leading underscore.
+#   "-v pe_def=xxx"           : Add description to .DEF file
 #   "-v pe_dll=1"             : Create .DEF file for Windows PECOFF
 #                               DLL link instead of map file.
+
+function cmp_string(i1, v1, i2, v2)
+{
+    # string value (and index) comparison, descending order
+    v1 = v1 i1
+    v2 = v2 i2
+    return (v1 > v2) ? -1 : (v1 != v2)
+}
 
 BEGIN {
   state = "nm";
@@ -92,11 +101,18 @@ $1 == "}" {
 
 END {
 
+  if (pe_def) {
+    print "LIBRARY " pe_dll " INITINSTANCE TERMINSTANCE";
+    print "DATA MULTIPLE";
+    print "DESCRIPTION \"" pe_def "\"";
+    print "EXPORTS";
+  } else
   if (pe_dll) {
     print "LIBRARY " pe_dll;
     print "EXPORTS";
   }
 
+  PROCINFO["sorted_in"] = "cmp_string"
   for (sym in export)
     if (def[sym] || (pe_dll && def["_" sym]))
       print sym;
