@@ -19,11 +19,11 @@ SHLIB_BASENAME  = gcc$(SHLIB_SOVERSION)
 SHLIB_MULTINAME = $(SHLIB_BASENAME)
 SHLIB_DLLNAME   = $(SHLIB_MULTINAME).dll
 SHLIB_LINK      = cp @shlib_map_file@ @shlib_map_file@.def && \
-	$(CC) -g -Zhigh-mem -Zomf -Zmap -Zdll -o $(SHLIB_DLLNAME) \
+	gcc -g -Zhigh-mem -Zomf -Zmap -Zdll -o $(SHLIB_DLLNAME) \
 	@shlib_map_file@.def @shlib_objs@ \
 	-lc_alias -lc_dll  \
 	&& ar rs $(SHLIB_BASENAME).a __main.o emx-ctordtor.o emx-eh.o \
-        && emximp -o libgcc_so_d.a $(SHLIB_BASENAME).def \
+        && emximp -o libgcc_so_d.a @shlib_map_file@.def \
 	&& ar rs libgcc_so_d.a __main.o emx-ctordtor.o emx-eh.o \
         && emxomf -o libgcc_so_d.lib libgcc_so_d.a \
         && touch $@
