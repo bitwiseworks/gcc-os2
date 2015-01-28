@@ -4204,7 +4204,15 @@ ix86_option_override_internal (bool main_args_p,
   set_ix86_tune_features (ix86_tune, opts->x_ix86_dump_tunes);
 
 #ifndef USE_IX86_FRAME_POINTER
+#ifdef __OS2__
+/* OS/2 needs the frame pointer to have proper stack trace when debugging
+   so it needs to be enabled by default. However, the configure portion that
+   sets a default for --enable-frame-pointer is executed after config.gcc which
+   sets this define based on this option. Looks like a configure.ac bug.  */
+#define USE_IX86_FRAME_POINTER 1
+#else
 #define USE_IX86_FRAME_POINTER 0
+#endif
 #endif
 
 #ifndef USE_X86_64_FRAME_POINTER
