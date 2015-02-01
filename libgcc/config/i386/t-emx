@@ -11,6 +11,7 @@ SHLIB_EXT = .dll
 SHLIB_SOVERSION = 1
 SHLIB_MKMAP = $(srcdir)/mkmap-flat.awk
 SHLIB_MAPFILES = libgcc-std.ver $(srcdir)/config/i386/libgcc-glibc.ver
+SHLIB_MAPFILES += $(srcdir)/config/i386/libgcc-emx.ver
 SHLIB_MKMAP_OPTS = -v pe_dll=gcc$(SHLIB_SOVERSION) -v leading_underscore=1 \
 		-v pe_def="GNU GCC Runtime Version $(gcc_version)-$(RPM_PACKAGE_RELEASE)"
 
