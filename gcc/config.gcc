@@ -1976,6 +1976,7 @@ i[34567]86-*-mingw* | x86_64-*-mingw*)
 i*86-pc-*emx)		# i?86 running OS/2
 	xm_file=i386/xm-emx.h
 	tm_file="${tm_file} i386/unix.h i386/bsd.h i386/gas.h i386/gstabs.h i386/emx.h"
+	tm_file="${tm_file} i386/emx-stdint.h"
 	extra_objs="emx.o emx-stubs.o"
 	extra_gcc_objs="emx-driver.o"
 	extra_options="${extra_options} i386/emx.opt"
