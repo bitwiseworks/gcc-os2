@@ -87,6 +87,10 @@ USER_H          = \
 	 $(srcdir)/ginclude/stdbool.h \
 	 \
 	 $(srcdir)/ginclude/varargs.h \
+	 $(srcdir)/ginclude/stdfix.h \
+	 $(srcdir)/ginclude/stdnoreturn.h \
+	 $(srcdir)/ginclude/stdalign.h \
+	 $(srcdir)/ginclude/stdatomic.h \
 	 $(EXTRA_HEADERS)
 
 # bird (#424): New gcc*dll hacks
