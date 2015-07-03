@@ -189,6 +189,9 @@ proc2_open (t_fd_pair* p_pair, tCC** pp_args)
   if (pipe ((int *) p_pair) < 0)
     return NOPROCESS;
 
+  /* Do not pass write_fd to the child */
+  fcntl(p_pair->write_fd, F_SETFD, FD_CLOEXEC);
+
   p_pair->read_fd = chain_open (p_pair->read_fd, pp_args, &ch_id);
   if (ch_id == NOPROCESS)
     close (p_pair->write_fd);
