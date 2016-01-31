@@ -19,3 +19,29 @@
 # Export custom EMX/KLIBC build symbols
 
 __chkstk_ms
+
+# __GTHREADS
+__gthread_os2_mutex_init
+__gthread_os2_mutex_destroy
+__gthread_os2_mutex_lock
+__gthread_os2_mutex_trylock
+__gthread_os2_mutex_unlock
+
+# __GTHREAD_HAS_COND
+__gthread_os2_cond_init
+__gthread_os2_cond_destroy
+__gthread_os2_cond_broadcast
+__gthread_os2_cond_wait
+__gthread_os2_cond_wait_recursive
+
+# __GTHREADS_CXX0X
+__gthread_os2_create
+__gthread_os2_join
+__gthread_os2_detach
+__gthread_os2_equal
+__gthread_os2_self
+__gthread_os2_yield
+__gthread_os2_mutex_timedlock
+__gthread_os2_recursive_mutex_timedlock
+__gthread_os2_cond_signal
+__gthread_os2_cond_timedwait

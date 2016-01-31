@@ -1,6 +1,7 @@
 /* Threads compatibily routines for libgcc2.  */
 /* Compile this one with gcc.  */
-/* Copyright (C) 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Contributed by KO Myung-Hun <komh@chollian.net>.
 
 This file is part of GNU CC.
 
@@ -33,6 +34,10 @@ Boston, MA 02111-1307, USA.  */
 #error "gthr-os2.h doesn't implement the _LIBOBJC mode!"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define __GTHREADS 1
 
 /* OS/2 threads specific definitions */
@@ -46,21 +51,24 @@ Boston, MA 02111-1307, USA.  */
 #include <InnoTekLIBC/backend.h>
 
 typedef int __gthread_key_t;
+
 typedef struct
 {
   signed char volatile done;
   signed char volatile started;
 } __gthread_once_t;
-typedef _fmutex __gthread_mutex_t;
+
 typedef struct {
-  long depth;
-  uint32_t owner;
-  _fmutex actual;
-} __gthread_recursive_mutex_t;
+  int recursive;
+  unsigned long mtx;
+  _fmutex static_lock;
+} __gthread_mutex_t, __gthread_recursive_mutex_t;
 
 #define __GTHREAD_ONCE_INIT		{ 0, 0 }
-#define __GTHREAD_RECURSIVE_MUTEX_INIT_FUNCTION __gthread_recursive_mutex_init_function
+#define __GTHREAD_MUTEX_INIT    { 0, 0, _FMUTEX_INITIALIZER }
 #define __GTHREAD_MUTEX_INIT_FUNCTION	__gthread_mutex_init_function
+#define __GTHREAD_RECURSIVE_MUTEX_INIT { 1, 0, _FMUTEX_INITIALIZER }
+#define __GTHREAD_RECURSIVE_MUTEX_INIT_FUNCTION __gthread_recursive_mutex_init_function
 
 static inline int
 __gthread_active_p (void)
@@ -95,99 +103,70 @@ __gthread_once (__gthread_once_t *once, void (*func) (void))
   return 0;
 }
 
+extern void __gthread_os2_mutex_init (__gthread_mutex_t *, int);
+extern int __gthread_os2_mutex_destroy (__gthread_mutex_t *, int);
+extern int __gthread_os2_mutex_lock (__gthread_mutex_t *, int);
+extern int __gthread_os2_mutex_trylock (__gthread_mutex_t *, int);
+extern int __gthread_os2_mutex_unlock (__gthread_mutex_t *, int);
+
 static inline void
 __gthread_mutex_init_function (__gthread_mutex_t *mutex)
 {
-  _fmutex_create (mutex, 0);
+  __gthread_os2_mutex_init (mutex, 0);
 }
 
 static inline int
 __gthread_mutex_destroy (__gthread_mutex_t *mutex )
 {
-  return 0;
+  return __gthread_os2_mutex_destroy (mutex, 0);
 }
 
 static inline int
 __gthread_mutex_lock (__gthread_mutex_t *mutex)
 {
-  return _fmutex_request (mutex, _FMR_IGNINT);
+  return __gthread_os2_mutex_lock (mutex, 0);
 }
 
 static inline int
 __gthread_mutex_trylock (__gthread_mutex_t *mutex)
 {
-  return _fmutex_request (mutex, _FMR_IGNINT | _FMR_NOWAIT);
+  return __gthread_os2_mutex_trylock (mutex, 0);
 }
 
 static inline int
 __gthread_mutex_unlock (__gthread_mutex_t *mutex)
 {
-  return _fmutex_release (mutex);
+  return __gthread_os2_mutex_unlock (mutex, 0);
+}
+
+static inline void
+__gthread_recursive_mutex_init_function (__gthread_recursive_mutex_t *mutex)
+{
+  __gthread_os2_mutex_init (mutex, 1);
 }
 
 static inline int
-__gthread_recursive_mutex_init_function (__gthread_recursive_mutex_t *mutex)
+__gthread_recursive_mutex_destroy (__gthread_recursive_mutex_t *mutex)
 {
-  mutex->depth = 0;
-  mutex->owner = fibGetTidPid();
-  return _fmutex_create (&mutex->actual, 0);
+  return __gthread_os2_mutex_destroy (mutex, 1);
 }
 
 static inline int
 __gthread_recursive_mutex_lock (__gthread_recursive_mutex_t *mutex)
 {
-  if (__gthread_active_p ())
-    {
-      uint32_t me = fibGetTidPid();
-
-      if (mutex->owner != me)
-	{
-	  __gthread_mutex_lock(&mutex->actual);
-	  mutex->owner = me;
-	}
-
-      mutex->depth++;
-    }
-  return 0;
+  return __gthread_os2_mutex_lock (mutex, 1);
 }
 
 static inline int
 __gthread_recursive_mutex_trylock (__gthread_recursive_mutex_t *mutex)
 {
-  if (__gthread_active_p ())
-    {
-      uint32_t me = fibGetTidPid();
-
-      if (mutex->owner != me)
-	{
-	  if (__gthread_mutex_trylock(&mutex->actual))
-	    return 1;
-	  mutex->owner = me;
-	}
-
-      mutex->depth++;
-    }
-  return 0;
+  return __gthread_os2_mutex_trylock (mutex, 1);
 }
 
 static inline int
 __gthread_recursive_mutex_unlock (__gthread_recursive_mutex_t *mutex)
 {
-  if (__gthread_active_p ())
-    {
-      if (--mutex->depth == 0)
-	{
-	   mutex->owner = fibGetTidPid();
-	   __gthread_mutex_unlock(&mutex->actual);
-	}
-    }
-  return 0;
-}
-
-static inline int
-__gthread_recursive_mutex_destroy (__gthread_recursive_mutex_t *__mutex)
-{
-  return 0;
+  return __gthread_os2_mutex_unlock (mutex, 1);
 }
 
 static inline int
@@ -230,5 +209,148 @@ __gthread_setspecific (__gthread_key_t key, const void *ptr)
     return errno;
   return 0;
 }
+
+#define __GTHREAD_HAS_COND 1
+
+typedef struct {
+  unsigned long ev;
+  unsigned long ack;
+  unsigned volatile signaled;
+  unsigned volatile waiters;
+  _fmutex static_lock;
+} __gthread_cond_t;
+
+#define __GTHREAD_COND_INIT { 0, 0, 0, 0, _FMUTEX_INITIALIZER }
+#define __GTHREAD_COND_INIT_FUNCTION __gthread_cond_init_function
+
+extern void __gthread_os2_cond_init (__gthread_cond_t *);
+extern int __gthread_os2_cond_destroy (__gthread_cond_t *);
+extern int __gthread_os2_cond_broadcast (__gthread_cond_t *);
+extern int __gthread_os2_cond_wait (__gthread_cond_t *, __gthread_mutex_t *);
+extern int __gthread_os2_cond_wait_recursive (__gthread_cond_t *,
+                                              __gthread_recursive_mutex_t *);
+
+static inline void
+__gthread_cond_init_function (__gthread_cond_t *cond)
+{
+  __gthread_os2_cond_init (cond);
+}
+
+static inline int
+__gthread_cond_destroy (__gthread_cond_t *cond)
+{
+  return __gthread_os2_cond_destroy (cond);
+}
+
+static inline int
+__gthread_cond_broadcast (__gthread_cond_t *cond)
+{
+  return __gthread_os2_cond_broadcast (cond);
+}
+
+static inline int
+__gthread_cond_wait (__gthread_cond_t *cond, __gthread_mutex_t *mutex)
+{
+  return __gthread_os2_cond_wait (cond, mutex);
+}
+
+static inline int
+__gthread_cond_wait_recursive (__gthread_cond_t *cond,
+                               __gthread_recursive_mutex_t *mutex)
+{
+  return __gthread_os2_cond_wait_recursive (cond, mutex);
+}
+
+#define __GTHREADS_CXX0X 1
+
+#include <time.h>
+
+typedef int __gthread_t;
+
+typedef struct timespec __gthread_time_t;
+
+extern int __gthread_os2_create (__gthread_t *, void *(*) (void*), void *);
+extern int __gthread_os2_join (__gthread_t, void **);
+extern int __gthread_os2_detach (__gthread_t);
+extern int __gthread_os2_equal (__gthread_t, __gthread_t);
+extern int __gthread_os2_self (void);
+extern int __gthread_os2_yield (void);
+extern int __gthread_os2_mutex_timedlock (__gthread_mutex_t *,
+                                          const __gthread_time_t *);
+extern int
+  __gthread_os2_recursive_mutex_timedlock (__gthread_recursive_mutex_t *,
+                                           const __gthread_time_t *);
+extern int __gthread_os2_cond_signal (__gthread_cond_t *);
+extern int __gthread_os2_cond_timedwait (__gthread_cond_t *,
+                                         __gthread_mutex_t *,
+                                         const __gthread_time_t *);
+
+static inline int
+__gthread_create (__gthread_t *thread, void *(*func) (void*), void *args)
+{
+  return __gthread_os2_create (thread, func, args);
+}
+
+static inline int
+__gthread_join (__gthread_t thread, void **value_ptr)
+{
+  return __gthread_os2_join (thread, value_ptr);
+}
+
+static inline int
+__gthread_detach (__gthread_t thread)
+{
+  return __gthread_os2_detach (thread);
+}
+
+/* Compare threads. Return non-zero if equal, otherwise 0.  */
+static inline int
+__gthread_equal (__gthread_t t1, __gthread_t t2)
+{
+  return __gthread_os2_equal (t1, t2);
+}
+
+static inline __gthread_t
+__gthread_self (void)
+{
+  return __gthread_os2_self ();
+}
+
+static inline int
+__gthread_yield (void)
+{
+  return __gthread_os2_yield ();
+}
+
+static inline int
+__gthread_mutex_timedlock (__gthread_mutex_t *mutex,
+                           const __gthread_time_t *abs_timeout)
+{
+  return __gthread_os2_mutex_timedlock (mutex, abs_timeout);
+}
+
+static inline int
+__gthread_recursive_mutex_timedlock (__gthread_recursive_mutex_t *mutex,
+                                     const __gthread_time_t *abs_timeout)
+{
+  return __gthread_os2_recursive_mutex_timedlock (mutex, abs_timeout);
+}
+
+static inline int
+__gthread_cond_signal (__gthread_cond_t *cond)
+{
+  return __gthread_os2_cond_signal (cond);
+}
+
+static inline int
+__gthread_cond_timedwait (__gthread_cond_t *cond, __gthread_mutex_t *mutex,
+                          const __gthread_time_t *abs_timeout)
+{
+  return __gthread_os2_cond_timedwait (cond, mutex, abs_timeout);
+}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* not __gthr_os2_h */

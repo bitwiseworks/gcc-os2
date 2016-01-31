@@ -1,0 +1,2 @@
+# We hide calls to OS/2 APIs needed for OS/2 thread support here:
+LIB2ADD = $(srcdir)/gthr-os2.c

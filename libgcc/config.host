@@ -814,6 +814,11 @@ x86_64-*-mingw*)
 	;;
 i*86-pc-*emx)		# i?86 running OS/2
 	tmake_file="$tmake_file i386/t-emx"
+	case ${target_thread_file} in
+	  os2)
+	    tmake_file="$tmake_file i386/t-gthr-os2"
+	    ;;
+	esac
 	extra_parts="$extra_parts emx-ctordtor.o"
 	host_exeext=.exe
 	;;
