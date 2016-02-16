@@ -380,6 +380,17 @@ do {									\
             builtin_define ("_cdecl=__attribute__((__cdecl__))");       \
             builtin_define ("_Cdecl=__attribute__((__cdecl__))");       \
           }                                                             \
+        if (c_dialect_cxx ())                                           \
+          {                                                             \
+            if (cxx_dialect >= cxx11)                                   \
+              {                                                         \
+                builtin_define ("__STDC_CONSTANT_MACROS");              \
+                builtin_define ("__STDC_LIMIT_MACROS");                 \
+              }                                                         \
+            if (cxx_dialect >= cxx11 ||                                 \
+                flag_iso /* For _GLIBCXX_USE_C99 of libstdc++-v3) */)   \
+              builtin_define ("__LONG_LONG_SUPPORTED");                 \
+          }                                                             \
 	builtin_define_std ("__KLIBC__=0");		\
 	builtin_define_std ("__KLIBC_MINOR__=6");		\
 	builtin_define_std ("__KLIBC_PATCHLEVEL__=3");		\
