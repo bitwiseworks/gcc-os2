@@ -295,6 +295,9 @@ case "${host_os}" in
   openbsd*)
     os_include_dir="os/bsd/openbsd"
     ;;
+  os2*)
+    os_include_dir="os/os2"
+    ;;
   qnx6.[12]*)
     os_include_dir="os/qnx/qnx6.1"
     c_model=c
