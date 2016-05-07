@@ -3,7 +3,7 @@
    Copyright (C) 2000(?)-2003 Andrew Zabolotny
    Copyright (C) 2003 InnoTek Systemberatung GmbH
    Copyright (C) 2003-2004 Knut St. Osmundsen
-   Modified for GCC 4.x by Paul Smedley 2008-2014
+   Modified for GCC 4.x, 5.x by Paul Smedley 2008-2016
 
 This file is part of the InnoTek port of GNU CC.
 
@@ -55,6 +55,11 @@ Boston, MA 02111-1307, USA.  */
 #define CHECK_STACK_LIMIT               4000
 
 #define MAX_OFILE_ALIGNMENT 32768
+
+/* 32-bit OS/2 aligns the stack on a 4-byte boundary but SSE instructions
+   may require 16-byte alignment.  */
+#undef STACK_REALIGN_DEFAULT
+#define STACK_REALIGN_DEFAULT TARGET_SSE
 
 /* OS/2 executables ends with .exe, but it's only enforced sometimes... */
 #define TARGET_EXECUTABLE_SUFFIX        ".exe"
