@@ -64,7 +64,6 @@ LIB1ASMFUNCS = _alloca _chkstk_ms
 LIB2FUNCS_EXTRA = $(srcdir)/config/i386/emx-ctordtor.c
 LIB2ADDEH       = \
     $(srcdir)/config/i386/emx-eh.c \
-    $(srcdir)/config/i386/emx-dllinit.c \
     $(srcdir)/config/i386/emx-ctordtor.c \
     $(srcdir)/unwind-dw2.c \
     $(srcdir)/unwind-dw2-fde.c \
