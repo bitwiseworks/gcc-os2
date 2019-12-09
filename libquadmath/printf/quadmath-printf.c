@@ -24,6 +24,18 @@ Boston, MA 02110-1301, USA.  */
 #include <stdio.h>
 #include "quadmath-printf.h"
 
+#if __EMX__
+/* No putwc yet (https://github.com/bitwiseworks/libc/issues/8), fake it */
+wint_t putwc(wchar_t c, struct __sFILE * f)
+{
+  int cl = c & 0xFF;
+  int ch = c >> 8;
+  if (putc(cl, f) == EOF || (ch && putc(ch, f) == EOF))
+    return WEOF;
+  return c;
+}
+#endif
+
 /* Read a simple integer from a string and update the string pointer.
    It is assumed that the first character is a digit.  */
 static unsigned int

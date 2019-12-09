@@ -46,6 +46,10 @@ Boston, MA 02110-1301, USA.  */
 
 #ifdef HAVE_WCHAR_H
 #define L_(x) L##x
+#if __EMX__
+/* No putwc yet (https://github.com/bitwiseworks/libc/issues/8), fake it */
+wint_t putwc(wchar_t c, struct __sFILE * f);
+#endif
 #else
 #define L_(x) x
 #undef wchar_t
