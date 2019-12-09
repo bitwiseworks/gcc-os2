@@ -94,9 +94,9 @@ esac
 # Original directory.
 ORIGDIR=`${PWDCMD}`
 export ORIGDIR
-FIXINCL=`${PWDCMD}`/fixincl
-if [ ! -x $FIXINCL ] ; then
-  echo "Cannot find fixincl" >&2
+FIXINCL=`which ${ORIGDIR}/fixincl`
+if [ -z "$FIXINCL" ] || [ ! -x $FIXINCL ] ; then
+  echo "Cannot find fixincl in $ORIGDIR" >&2
   exit 1
 fi
 export FIXINCL
