@@ -34,6 +34,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "stringpool.h"
 #include "expmed.h"
 #include "optabs.h"
+#ifdef __EMX__
+#include "cp/cp-tree.h" /* we need SET_DECL_LANGUAGE */
+#include "dbxout.h"
+#endif
 #include "regs.h"
 #include "emit-rtl.h"
 #include "recog.h"
@@ -53,10 +57,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "explow.h"
 #include "expr.h"
 #include "cfgrtl.h"
-#ifdef __EMX__
-#include "cp/cp-tree.h" /* we need SET_DECL_LANGUAGE */
-#include "dbxout.h"
-#endif
 #include "common/common-target.h"
 #include "langhooks.h"
 #include "reload.h"
@@ -6353,7 +6353,8 @@ ix86_function_ok_for_sibcall (tree decl, tree exp)
    arguments as in struct attribute_spec.handler.  */
 
 static tree
-ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
+ix86_handle_cconv_attribute (tree *node, tree name, tree args,
+			     int flags ATTRIBUTE_UNUSED,
 			     bool *no_add_attrs)
 {
   if (TREE_CODE (*node) != FUNCTION_TYPE
@@ -6515,6 +6516,18 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
 	{
 	  error ("cdecl and thiscall attributes are not compatible");
 	}
+#ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
+      if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("system and cdecl attributes are not compatible");
+	}
+#endif
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
+        {
+	  error ("optlink and cdecl attributes are not compatible");
+	}
+#endif
     }
   else if (is_attribute_p ("thiscall", name))
     {
@@ -6536,13 +6549,13 @@ ix86_handle_cconv_attribute (tree *node, tree name, tree args, int,
 #ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
       if (lookup_attribute ("system", TYPE_ATTRIBUTES (*node)))
         {
-	  error ("system and cdecl attributes are not compatible");
+	  error ("system and thiscall attributes are not compatible");
 	}
 #endif
 #ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
       if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (*node)))
         {
-	  error ("optlink and cdecl attributes are not compatible");
+	  error ("optlink and thiscall attributes are not compatible");
 	}
 #endif
     }
@@ -7494,44 +7507,12 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
 
   if (!TARGET_64BIT)
     {
-      /* Use ecx and edx registers if function has fastcall attribute,
-	 else look for regparm information.  */
-      if (fntype)
-	{
-	  unsigned int ccvt = ix86_get_callcvt (fntype);
-	  if ((ccvt & IX86_CALLCVT_THISCALL) != 0)
-	    {
-	      cum->nregs = 1;
-	      cum->fastcall = 1; /* Same first register as in fastcall.  */
-	    }
-	  else if ((ccvt & IX86_CALLCVT_FASTCALL) != 0)
-	    {
-	      cum->nregs = 2;
-	      cum->fastcall = 1;
-	    }
-	  else
-            {
 #ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
-	      if (lookup_attribute ("optlink", TYPE_ATTRIBUTES (fntype)))
-		{
-		  cum->optlink = 1;
-		  /* Limit number of registers to pass arguments as in _Optlink specification */
-		  cum->nregs = 3;
-		  cum->fpu_nregs = 4;
-		  /* The total size of arguments passed in registers can be up to 12 dwords.
-		     Float types count for their real size (e.g. float for 1 dword, double
-		     for 2 dwords. long double for 4 dwords). */
-		  cum->ec_slots = 12;
-		}
-	      else
-#endif
-              cum->nregs = ix86_function_regparm (fntype, fndecl);
-	    }
-
-#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
-	  /* _Optlink calling convention says all args until the ellipsis
-	     are passed in registers, and all varargs on the stack. */
-	  if (!cum->optlink)
+      /* _Optlink calling convention says all args until the ellipsis
+         are passed in registers, and all varargs on the stack. */
+      if (fntype && lookup_attribute ("optlink", TYPE_ATTRIBUTES (fntype)))
+	cum->optlink = 1;
+      if (!cum->optlink)
 #endif
       /* If there are variable arguments, then we won't pass anything
          in registers in 32-bit mode. */
@@ -7550,6 +7531,39 @@ init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
 	  cum->warn_mmx = false;
 	  return;
 	}
+
+      /* Use ecx and edx registers if function has fastcall attribute,
+	 else look for regparm information.  */
+      if (fntype)
+	{
+	  unsigned int ccvt = ix86_get_callcvt (fntype);
+	  if ((ccvt & IX86_CALLCVT_THISCALL) != 0)
+	    {
+	      cum->nregs = 1;
+	      cum->fastcall = 1; /* Same first register as in fastcall.  */
+	    }
+	  else if ((ccvt & IX86_CALLCVT_FASTCALL) != 0)
+	    {
+	      cum->nregs = 2;
+	      cum->fastcall = 1;
+	    }
+	  else
+            {
+#ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
+	      if (cum->optlink)
+		{
+		  /* Limit number of registers to pass arguments as in _Optlink specification */
+		  cum->nregs = 3;
+		  cum->fpu_nregs = 4;
+		  /* The total size of arguments passed in registers can be up to 12 dwords.
+		     Float types count for their real size (e.g. float for 1 dword, double
+		     for 2 dwords. long double for 4 dwords). */
+		  cum->ec_slots = 12;
+		}
+	      else
+#endif
+              cum->nregs = ix86_function_regparm (fntype, fndecl);
+	    }
 	}
       /* Set up the number of SSE registers used for passing SFmode
 	 and DFmode arguments.  Warn for mismatching ABI.  */
@@ -46327,11 +46341,13 @@ static const struct attribute_spec ix86_attribute_table[] =
     ix86_handle_fndecl_attribute, NULL },
 #ifdef TARGET_SYSTEM_DECL_ATTRIBUTES
   /* System says the function is extern "C" and is not underscored. */
-  { "system", 0, 0, false, true,  true,  ix86_handle_cconv_attribute },
+  { "system", 0, 0, false, true, true, true, ix86_handle_cconv_attribute,
+    NULL },
 #endif
 #ifdef TARGET_OPTLINK_DECL_ATTRIBUTES
   /* Optlink is like regparm with a few differences */
-  { "optlink", 0, 0, false, true,  true,  ix86_handle_cconv_attribute },
+  { "optlink", 0, 0, false, true, true, true, ix86_handle_cconv_attribute,
+    NULL },
 #endif
 
   /* End element.  */
