@@ -29,7 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <sys/wait.h>
 #endif
 
-#if defined( HAVE_MMAP_FILE ) && !defined(__OS2__)
+#if defined( HAVE_MMAP_FILE )
 #include <sys/mman.h>
 #define  BAD_ADDR ((void*)-1)
 #endif
@@ -330,7 +330,7 @@ load_file ( const char* fname )
       return (char*)NULL;
     }
 
-#if defined( HAVE_MMAP_FILE ) && !defined(__OS2__)
+#ifdef HAVE_MMAP_FILE
   curr_data_mapped = BOOL_TRUE;
 
   /*  IF the file size is a multiple of the page size,
