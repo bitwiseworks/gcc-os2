@@ -2807,7 +2807,7 @@ convert_regs_entry (void)
       if (dead_arguments)
 	{
 	  rtx seq;
-	  rtx after;
+	  rtx_insn *after;
 	  start_sequence ();
 
 	  /* ??? pop_stack needs some point to emit insns after.

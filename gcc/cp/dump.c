@@ -23,6 +23,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "cp-tree.h"
 #include "tree-dump.h"
+#ifdef __EMX__
+#include "stringpool.h"
+#include "attribs.h"
+#endif
 
 /* Dump a representation of the accessibility information associated
    with T.  */
