@@ -72,6 +72,15 @@ Driver
 Zno-fork
 Driver
 
+Zfork
+Driver
+
+Zunix
+Driver
+
+Zno-unix
+Driver
+
 Zsmall-conv
 Driver
 
@@ -90,6 +99,3 @@ Does nothing. Preserved for backward compatibility.
 R
 Common Ignore
 Does nothing. Preserved for backward compatibility.
-
-Zno-unix
-Driver

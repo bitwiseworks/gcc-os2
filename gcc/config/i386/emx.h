@@ -65,9 +65,6 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_EXECUTABLE_SUFFIX        ".exe"
 #define NO_FORCE_EXEOBJ_SUFFIX
 
-/* The system headers are C++-aware. */
-#define NO_IMPLICIT_EXTERN_C
-
 /* Don't provide default values for __CTOR_LIST__ and __DTOR_LIST__ in libgcc */
 #define CTOR_LISTS_DEFINED_EXTERNALLY
 
@@ -181,31 +178,24 @@ Boston, MA 02111-1307, USA.  */
 #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
   asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
 
-/* This is how to output an assembler line that says to advance the
-   location counter to a multiple of 2**LOG bytes.
-   bird: Pad using int 3. */
-#undef ASM_OUTPUT_ALIGN
-#define ASM_OUTPUT_ALIGN(FILE,LOG) \
-    if ((LOG)!=0) fprintf ((FILE), "\t.align %d,0xcc\n", LOG)
-
 /* Output a reference to a label.
    We're doing all here since we must get the '*' vs. user_label_prefix
    bit right. */
-
 #undef ASM_OUTPUT_LABELREF
-#define ASM_OUTPUT_LABELREF(FILE,NAME)       \
-  do {                                       \
-    const char *xname = (NAME);              \
-    if (*xname == DLL_IMPORT_EXPORT_PREFIX)  \
-      xname += 3;                            \
-    if (*xname == '*')                       \
-      xname += 1;                            \
-    else if (*xname != FASTCALL_PREFIX)      \
-      fputs (user_label_prefix, FILE);       \
-    fputs (xname, FILE);                     \
+#define ASM_OUTPUT_LABELREF(FILE,NAME) \
+  do { \
+    const char *xname = (NAME); \
+    if (*xname == DLL_IMPORT_EXPORT_PREFIX) \
+      xname += 3; \
+    if (*xname == '*') /* used by _System */ \
+      xname += 1; \
+    else if (*xname != FASTCALL_PREFIX) \
+      fputs (user_label_prefix, FILE); \
+    fputs (xname, FILE); \
   } while (0)
 
-/* Get tree.c to declare a target-specific specialization of merge_decl_attributes.  */
+/* Get tree.c to declare a target-specific specialization of
+   merge_decl_attributes.  */
 #define TARGET_DLLIMPORT_DECL_ATTRIBUTES 1
 
 #undef SUBTARGET_ENCODE_SECTION_INFO
@@ -239,34 +229,32 @@ Boston, MA 02111-1307, USA.  */
 
 /* Output the label for an initialized variable.  */
 #undef ASM_DECLARE_OBJECT_NAME
-#define ASM_DECLARE_OBJECT_NAME(STREAM, NAME, DECL)	\
-do {							\
-  i386_emx_maybe_record_exported_symbol (DECL, NAME, 1);	\
-  ASM_OUTPUT_LABEL ((STREAM), (NAME));			\
+#define ASM_DECLARE_OBJECT_NAME(STREAM, NAME, DECL)     \
+do {                                                    \
+  i386_emx_maybe_record_exported_symbol (DECL, NAME, 1);        \
+  ASM_OUTPUT_LABEL ((STREAM), (NAME));                  \
 } while (0)
 
 /* Track exported functions... */
 #undef ASM_DECLARE_FUNCTION_NAME
-#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
-  do									\
-    {									\
-      i386_emx_maybe_record_exported_symbol (DECL, NAME, 0);		\
-      ASM_OUTPUT_LABEL (FILE, NAME);					\
-    }									\
+#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)                     \
+  do                                                                    \
+    {                                                                   \
+      i386_emx_maybe_record_exported_symbol (DECL, NAME, 0);            \
+      ASM_OUTPUT_LABEL (FILE, NAME);                                    \
+    }                                                                   \
   while (0)
 
 /* Output function declarations at the end of the file.  */
 #undef TARGET_ASM_FILE_END
 #define TARGET_ASM_FILE_END i386_emx_file_end
 
-#if 1
 /* This macro gets just the user-specified name out of the string
    in a SYMBOL_REF. Discard trailing @[NUM] encoded by ENCODE_SECTION_INFO.
    This is used to generate unique section names from function names
    (if -ffunction-sections is given).  */
 #undef  TARGET_STRIP_NAME_ENCODING
 #define TARGET_STRIP_NAME_ENCODING      emx_strip_name_encoding_full
-#endif
 #define TARGET_VALID_DLLIMPORT_ATTRIBUTE_P i386_emx_valid_dllimport_attribute_p
 #define TARGET_CXX_ADJUST_CLASS_AT_DEFINITION i386_emx_adjust_class_at_definition
 #define SUBTARGET_MANGLE_DECL_ASSEMBLER_NAME i386_emx_mangle_decl_assembler_name
@@ -321,20 +309,14 @@ extern void i386_emx_encode_section_info (tree, rtx, int);
 #define TARGET_SUBTARGET_DEFAULT \
    (MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_STACK_PROBE)
 
-
 /* Don't allow flag_pic to propagate since gas may produce invalid code
    otherwise.  */
 
 #undef  SUBTARGET_OVERRIDE_OPTIONS
-#define SUBTARGET_OVERRIDE_OPTIONS					\
-do {									\
-  if (flag_pic)								\
-    {									\
-      warning (0, "-f%s ignored for target (all code is position independent)",\
-	       (flag_pic > 1) ? "PIC" : "pic");				\
-      flag_pic = 0;							\
-    }									\
-} while (0)								\
+#define SUBTARGET_OVERRIDE_OPTIONS                                      \
+do {                                                                    \
+     flag_pic = 0;                                                     \
+} while (0)                                                             \
 
 /* Add a __POST$xxx label before epilogue if -mepilogue specified */
 #undef TARGET_ASM_FUNCTION_BEGIN_EPILOGUE
@@ -372,16 +354,16 @@ do {									\
         builtin_assert ("system=posix");                                \
         builtin_assert ("system=emx");                                  \
         builtin_define ("__stdcall=__attribute__((__stdcall__))");      \
-	builtin_define ("__fastcall=__attribute__((__fastcall__))");	\
+        builtin_define ("__fastcall=__attribute__((__fastcall__))");    \
         builtin_define ("__cdecl=__attribute__((__cdecl__))");          \
         builtin_define ("_Optlink=__attribute__((__optlink__))");       \
         builtin_define ("_System=__attribute__((__system__))");         \
-	builtin_define ("_Export=__attribute__((dllexport))");	        \
-	builtin_define ("__declspec(x)=__attribute__((x))");		\
+        builtin_define ("_Export=__attribute__((dllexport))");          \
+        builtin_define ("__declspec(x)=__attribute__((x))");            \
         if (!flag_iso)                                                  \
           {                                                             \
             builtin_define ("_stdcall=__attribute__((__stdcall__))");   \
-	    builtin_define ("_fastcall=__attribute__((__fastcall__))");	\
+            builtin_define ("_fastcall=__attribute__((__fastcall__))"); \
             builtin_define ("_cdecl=__attribute__((__cdecl__))");       \
             builtin_define ("_Cdecl=__attribute__((__cdecl__))");       \
           }                                                             \
@@ -396,12 +378,12 @@ do {									\
                 flag_iso /* For _GLIBCXX_USE_C99 of libstdc++-v3) */)   \
               builtin_define ("__LONG_LONG_SUPPORTED");                 \
           }                                                             \
-	builtin_define_std ("__KLIBC__=0");		\
-	builtin_define_std ("__KLIBC_MINOR__=6");		\
-	builtin_define_std ("__KLIBC_PATCHLEVEL__=3");		\
-	builtin_define_std ("__KLIBC_VERSION__=0x00060002");		\
-	builtin_define_std ("__INNOTEK_LIBC__=0x006");	\
-	builtin_assert ("system=os2");	\
+        builtin_define_std ("__KLIBC__=0");             \
+        builtin_define_std ("__KLIBC_MINOR__=6");               \
+        builtin_define_std ("__KLIBC_PATCHLEVEL__=3");          \
+        builtin_define_std ("__KLIBC_VERSION__=0x00060002");            \
+        builtin_define_std ("__INNOTEK_LIBC__=0x006");  \
+        builtin_assert ("system=os2");  \
     }                                                                   \
   while (0)
 
@@ -438,7 +420,7 @@ do {									\
 
 /* Provide extra args to the linker and extra switch-translations.  */
 #define LINK_SPEC                                                              \
-  "%{Zexe} %{Zstack*} %{Zlinker*} %{Zmap*} %{Zsym} %{Zdll} %{shared:-Zdll} %{static:-static}" \
+  "%{Zexe} %{Zstack*} %{Zlinker*} %{Zmap*} %{Zsym} %{Zdll} %{shared:-Zdll} %{static:-static} " \
   "%{!o*:-o %b%{Zdll|shared:.dll}%{!Zdll:%{!shared:%{!Zexe:.exe}}}} "          \
   "%{static:%{Zcrtdll*:%e-static and -Zcrtdll are incompatible}}"              \
   "%{Zomf:%{Zaout:%e-Zomf and -Zaout are incompatible}}"                       \
@@ -489,7 +471,7 @@ do {									\
 #endif
 
 #undef ENDFILE_SPEC
-#define ENDFILE_SPEC                    "%{Zomf:-lend}"
+#define ENDFILE_SPEC "%{Zomf:-lend}"
 
 /* Override the default linker program (collect2).  */
 #define LINKER_NAME                     "%{Zomf:emxomf}ld.exe"
@@ -572,13 +554,99 @@ do {									\
 /******************************************************************************
  *                             - I - N - I - T -
  ******************************************************************************/
+
+#define EMX_INITIALIZE_ENVIRONMENT(taildirs)                                   \
+  /* Set env.vars GCC_ROOT, G++_ROOT and BINUTILS_ROOT.  */                    \
+  {                                                                            \
+  int fGCC = !getenv ("GCC_ROOT");                                             \
+  int fGPP = !getenv ("G++_ROOT");                                             \
+  int fBIN = !getenv ("BINUTILS_ROOT");                                        \
+  if (fGCC || fGPP || fBIN)                                                    \
+    {                                                                          \
+      char root_path [260];                                                    \
+      if (!_execname (root_path, sizeof (root_path)))                          \
+      {                                                                        \
+        int i;                                                                 \
+        for (i = 0; i < taildirs; i++)                                         \
+          {                                                                    \
+            char *name = _getname (root_path);                                 \
+            if (name > root_path)                                              \
+              {                                                                \
+                if (i < taildirs - 1)                                          \
+                  name--;                                                      \
+                if (*name != ':')                                              \
+                  *name = '\0';                                                \
+              }                                                                \
+          }                                                                    \
+        if (fGCC)                                                              \
+          setenv ("GCC_ROOT", root_path, 1);                                   \
+        if (fGPP)                                                              \
+          setenv ("G++_ROOT", root_path, 1);                                   \
+        if (fGCC)                                                              \
+          setenv ("BINUTILS_ROOT", root_path, 1);                              \
+      }                                                                        \
+    }                                                                          \
+  }
+
+/* emxomf does not understand stabs+, so for frontends we have to
+   switch to standard stabs if -Zomf is used. We also do many other
+   argv preprocessing here. */
+#if 1
 extern void emx_driver_init (unsigned int *,struct cl_decoded_option **);
 #define GCC_DRIVER_HOST_INITIALIZATION \
         emx_driver_init (&decoded_options_count, &decoded_options)
+#else
+#define GCC_DRIVER_HOST_INITIALIZATION                                         \
+  {                                                                            \
+    int i, j, new_argc, max_argc;                                              \
+    const char **new_argv;                                                     \
+    _emxload_env ("GCCLOAD");                                                  \
+    _envargs (&argc, (char ***)&argv, "GCCOPT");                               \
+    _response (&argc, (char ***)&argv);                                        \
+    _wildcard (&argc, (char ***)&argv);                                        \
+                                                                               \
+    /* Copy argv into a new location and modify it while copying */            \
+    new_argv = (const char **)xmalloc ((max_argc = argc) * sizeof (char *));    \
+    new_argv [0] = argv [0];                                                   \
+    for (i = 1, new_argc = 1; i < argc; i++)                                   \
+      {                                                                        \
+        int         arg_count = 1;                                             \
+        const char *arg [4];                                                   \
+        arg [0] = argv [i];                                                    \
+        if (!strcmp (argv [i], "-Zcrtdll"))                                    \
+          arg [0] = "-Zcrtdll=c_dll";                                          \
+        else if (!strcmp (argv [i], "-Zlinker"))                               \
+          {                                                                    \
+            if (i + 1 >= argc)                                                 \
+                fatal_error ("argument to `-Zlinker' is missing");                   \
+            arg [0] = "-Xlinker";                                              \
+            arg [1] = "-O";                                                    \
+            arg [2] = "-Xlinker";                                              \
+            arg [3] = argv [++i];                                              \
+            arg_count = 4;                                                     \
+          }                                                                    \
+        if (new_argc + arg_count > max_argc)                                   \
+            new_argv = (const char **)xrealloc (new_argv,                       \
+                (new_argc + arg_count) * sizeof (char *));                     \
+        for (j = 0; j < arg_count; j++)                                        \
+            new_argv [new_argc++] = arg [j];                                   \
+      }                                                                        \
+    argv = new_argv; argc = new_argc;                                          \
+    EMX_INITIALIZE_ENVIRONMENT(2)                                              \
+  }
+#endif
 
-
-
-
+/* Do some OS/2-specific work upon initialization of all compilers */
+#define COMPILER_HOST_INITIALIZATION                                           \
+  {                                                                            \
+    /* Preload compiler if specified by GCCLOAD for faster subsequent runs */  \
+    _emxload_env ("GCCLOAD");                                                  \
+    /* Compilers don't fork (thanks God!) so we can use >32MB RAM */           \
+    /* bird: this doesn't matter really as the compiler now should use high */ \
+    /*       memory. But we'll leave it here in case a DLL gets broken. */     \
+    _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);                              \
+    EMX_INITIALIZE_ENVIRONMENT(5)                                              \
+  }
 
 /* The following will be defined only when compiling libgcc2
  * to avoid including large .h files when they are not needed.

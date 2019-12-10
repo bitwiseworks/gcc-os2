@@ -1,5 +1,5 @@
-/* emx host-specific hook definitions.
- Copyright (C) 2004, 2007 Free Software Foundation, Inc.
+/* EMX host-specific hook definitions, based on host-cygwin.c
+ Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
  This file is part of GCC.
 
@@ -20,84 +20,59 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include <sys/mman.h>
-#include "hosthooks.h"
-#include "hosthooks-def.h"
-#include "toplev.h"
 #include "diagnostic.h"
-
-#define	MAP_PRIVATE	0x2
-#define MAP_FAILED ((void *) -1)
-
-#include "config.h"
-#include "system.h"
-#include "coretypes.h"
-#include <sys/mman.h>
 #include "hosthooks.h"
 #include "hosthooks-def.h"
 
+static void * emx_gt_pch_get_address (size_t, int fd);
+static size_t emx_gt_pch_alloc_granularity (void);
 
 #undef HOST_HOOKS_GT_PCH_GET_ADDRESS
 #define HOST_HOOKS_GT_PCH_GET_ADDRESS emx_gt_pch_get_address
-#undef HOST_HOOKS_GT_PCH_USE_ADDRESS
-#define HOST_HOOKS_GT_PCH_USE_ADDRESS emx_gt_pch_use_address
+#undef HOST_HOOKS_GT_PCH_ALLOC_GRANULARITY
+#define HOST_HOOKS_GT_PCH_ALLOC_GRANULARITY emx_gt_pch_alloc_granularity
 
-/* For various ports, try to guess a fixed spot in the vm space
-   that's probably free.  Based on McDougall, Mauro, Solaris Internals, 2nd
-   ed., p.460-461, fig. 9-3, 9-4, 9-5.  */
-#if defined(__sparcv9__)
-/* This low to avoid VA hole on UltraSPARC I/II.  */
-# define TRY_EMPTY_VM_SPACE	0x70000000000
-#elif defined(__sparc__)
-# define TRY_EMPTY_VM_SPACE	0x80000000
-#elif defined(__x86_64__)
-# define TRY_EMPTY_VM_SPACE	0x8000000000000000
-#elif defined(__i386__)
-# define TRY_EMPTY_VM_SPACE	0xB0000000
-#else
-# define TRY_EMPTY_VM_SPACE	0
-#endif
+/* Granularity for reserving address space.  */
+static const size_t va_granularity = 0x10000;
 
-/* Determine a location where we might be able to reliably allocate
-   SIZE bytes.  FD is the PCH file, though we should return with the
-   file unmapped.  */
+/*  Return the alignment required for allocating virtual memory. */
+static size_t
+emx_gt_pch_alloc_granularity (void)
+{
+  return va_granularity;
+}
 
+/* Identify an address that's likely to be free in a subsequent invocation
+   of the compiler.  The area should be able to hold SIZE bytes.  FD is an
+   open file descriptor if the host would like to probe with mmap.  */
 static void *
-emx_gt_pch_get_address (size_t size, int fd)
+emx_gt_pch_get_address (size_t sz, int fd)
 {
-  void *addr;
+  void *base;
+  off_t p = lseek(fd, 0, SEEK_CUR);
 
-  addr = mmap ((caddr_t) NULL, size,
-		     PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+  if (p == (off_t) -1)
+    fatal_error (input_location, "can%'t get position in PCH file: %m");
 
-  /* If we failed the map, that means there's *no* free space.  */
-  if (addr == (void *) MAP_FAILED)
-    return NULL;
-  /* Unmap the area before returning.  */
-  munmap ((caddr_t) addr, size);
+   /* emx requires that the underlying file be at least
+      as large as the requested mapping.  */
+  if ((size_t) p < sz)
+  {
+    if ( ftruncate (fd, sz) == -1 )
+      fatal_error (input_location, "can%'t extend PCH file: %m");
+  }
 
-  return addr;
+  base = mmap (NULL, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+
+  if (base == MAP_FAILED)
+    base = NULL;
+  else
+    munmap (base, sz);
+
+  if (lseek (fd, p, SEEK_SET) == (off_t) -1 )
+    fatal_error (input_location, "can%'t set position in PCH file: %m");
+
+  return base;
 }
 
-/* Map SIZE bytes of FD+OFFSET at BASE.  Return 1 if we succeeded at
-   mapping the data at BASE, -1 if we couldn't.  */
-
-static int
-emx_gt_pch_use_address (void *base, size_t size, int fd, size_t offset)
-{
-  void *addr;
-
-  /* We're called with size == 0 if we're not planning to load a PCH
-     file at all.  This allows the hook to free any static space that
-     we might have allocated at link time.  */
-  if (size == 0)
-    return -1;
-
-  addr = mmap ((caddr_t) base, size,
-		     PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, offset);
-
-  return addr == base ? 1 : -1;
-}
-
-
 const struct host_hooks host_hooks = HOST_HOOKS_INITIALIZER;

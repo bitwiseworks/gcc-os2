@@ -2,7 +2,7 @@
 
 Original version by Eberhard Mattes, based on i386.c.
 Heavily modified by Andrew Zabolotny and Knut St. Osmundsen.
-Modified for GCC 4.x by Paul Smedley 2008-2014
+Modified for GCC 4.x, 5.x, 6.x, 7.x, 8.x by Paul Smedley 2008-2018
 
 This file is part of GNU CC.
 
@@ -29,7 +29,17 @@ Boston, MA 02111-1307, USA.  */
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "output.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
 #include "flags.h"
 #include "tm_p.h"
 #include "diagnostic-core.h"
@@ -39,6 +49,7 @@ Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "except.h"
 #include "stringpool.h"
+#include "attribs.h"
 #include "varasm.h"
 
 /* The size of the target's pointer type.  */
@@ -422,7 +433,7 @@ gen_stdcall_or_fastcall_suffix (tree decl, tree id, bool fastcall)
 }
 
 static tree
-gen_system_or_optlink_prefix (tree decl, tree id)
+gen_system_or_optlink_suffix (tree decl, tree id)
 {
   const char *old_str = IDENTIFIER_POINTER (id != NULL_TREE ? id : DECL_NAME (decl));
   char *new_str, *p;
@@ -450,9 +461,9 @@ i386_emx_maybe_mangle_decl_assembler_name (tree decl, tree id)
       else if (lookup_attribute ("fastcall", type_attributes))
 	new_id = gen_stdcall_or_fastcall_suffix (decl, id, true);
       else if (lookup_attribute ("system", type_attributes))
-	new_id = gen_system_or_optlink_prefix (decl, id);
+	new_id = gen_system_or_optlink_suffix (decl, id);
       else if (lookup_attribute ("optlink", type_attributes))
-	new_id = gen_system_or_optlink_prefix (decl, id);
+	new_id = gen_system_or_optlink_suffix (decl, id);
     }
 
   return new_id;
@@ -612,6 +623,7 @@ i386_emx_asm_output_aligned_decl_common (FILE *stream, tree decl,
   dfprintf ((stderr, "trace: i386_emx_asm_output_aligned_decl_common\n"));
 
   i386_emx_maybe_record_exported_symbol (decl, name, 1);
+
   rtx symbol;
   symbol = XEXP (DECL_RTL (decl), 0);
   gcc_assert (GET_CODE (symbol) == SYMBOL_REF);
