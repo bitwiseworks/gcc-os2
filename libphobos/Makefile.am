@@ -21,7 +21,7 @@ else
   SUBDIRS =
 endif
 
-ACLOCAL_AMFLAGS = -I . -I .. -I ../config
+ACLOCAL_AMFLAGS = -I .. -I . -I ../config
 
 # Multilib support.
 MAKEOVERRIDES=

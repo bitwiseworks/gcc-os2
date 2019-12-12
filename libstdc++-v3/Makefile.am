@@ -30,7 +30,7 @@ endif
 ## Keep this list sync'd with acinclude.m4:GLIBCXX_CONFIGURE.
 SUBDIRS = include libsupc++ $(hosted_source)
 
-ACLOCAL_AMFLAGS = -I . -I .. -I ../config
+ACLOCAL_AMFLAGS = -I .. -I . -I ../config
 
 # Testsuite/check forwarding targets.
 check-%:
