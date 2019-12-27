@@ -31,6 +31,12 @@ endif
 ## Keep this list sync'd with acinclude.m4:GLIBCXX_CONFIGURE.
 SUBDIRS = c++98 c++11 c++17 $(filesystem_dir)
 
+if OS_OS2
+## Force the DLL to be stdcppX.DLL instead of stdc++.dll for backward
+## compatibility and to avoid dangerous symbols in the file name.
+short_name = -shortname stdcpp
+endif
+
 # Cross compiler support.
 if VTV_CYGMIN
 toolexeclib_LTLIBRARIES = libvtv.la libstdc++.la
@@ -105,7 +111,7 @@ libstdc___la_DEPENDENCIES = \
 	$(top_builddir)/src/c++17/libc++17convenience.la
 
 libstdc___la_LDFLAGS = \
-	-version-info $(libtool_VERSION) ${version_arg} -lm
+	-version-info $(libtool_VERSION) ${version_arg} -lm $(short_name)
 
 libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS)
 

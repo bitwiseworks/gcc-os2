@@ -491,6 +491,12 @@ esac
 AM_CONDITIONAL(INCLUDE_DIR_NOTPARALLEL,
                test $glibcxx_include_dir_notparallel = "yes")
 
+case "$host_os" in
+  *os2*) os_os2=yes ;;
+  *) os_os2=no ;;
+esac
+AM_CONDITIONAL(OS_OS2, test "$os_os2" = "yes")
+
 # Propagate the target-specific source directories through the build chain.
 ATOMICITY_SRCDIR=config/${atomicity_dir}
 ATOMIC_WORD_SRCDIR=config/${atomic_word_dir}
