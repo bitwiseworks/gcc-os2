@@ -1992,7 +1992,6 @@ i*86-pc-*emx)		# i?86 running OS/2
 		thread_file=os2
 	fi
 	gas=yes
-	gnu_ld=yes
 	float_format=none
 	;;
 x86_64-*-fuchsia*)

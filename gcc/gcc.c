@@ -5716,15 +5716,17 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    /* We are going to expand `%o' into `@FILE', where FILE
 	       is a newly-created temporary filename.  The filenames
 	       that would usually be expanded in place of %o will be
-	       written to the temporary file.  */
-	    if (at_file_supplied)
+	       written to the temporary file.  Note that we don't do
+	       that for non-GNU linkers as they may be not compatible
+	       with libiberty's response files (e.g. EMX OMF linker).  */
+	    if (HAVE_GNU_LD && at_file_supplied)
 	      open_at_file ();
 
 	    for (i = 0; i < n_infiles + lang_specific_extra_outfiles; i++)
 	      if (outfiles[i])
 		store_arg (outfiles[i], 0, 0);
 
-	    if (at_file_supplied)
+	    if (HAVE_GNU_LD && at_file_supplied)
 	      close_at_file ();
 	    break;
 
@@ -7350,11 +7352,11 @@ driver::main (int argc, char **argv)
   bool early_exit;
 
   set_progname (argv[0]);
-  expand_at_files (&argc, &argv);
 #ifdef __EMX__
+  /* No one is using it nowadays, perhaps it should go away (dangerous).  */
   _envargs (&argc, &argv, "GCCOPT");
-  _wildcard (&argc, &argv);
 #endif
+  expand_at_files (&argc, &argv);
   decode_argv (argc, const_cast <const char **> (argv));
   global_initializations ();
   build_multilib_strings ();
