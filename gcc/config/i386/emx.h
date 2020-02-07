@@ -129,9 +129,12 @@ Boston, MA 02111-1307, USA.  */
 #define SIZE_TYPE                       "unsigned int"
 #define PTRDIFF_TYPE                    "int"
 
-/* wchar_t is unsigned short. */
+/* Define wchar_t as unsigned short for compatibility with OS/2 Toolkit. */
 #define WCHAR_TYPE                      "short unsigned int"
 #define WCHAR_TYPE_SIZE                 16
+
+/* Define wint_t as signed for compatibility with normal POSIX return type. */
+#define WINT_TYPE                       "int"
 
 /* We want the _System attribute */
 #define TARGET_SYSTEM_DECL_ATTRIBUTES
