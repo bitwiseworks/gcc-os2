@@ -632,7 +632,7 @@ i386_emx_asm_output_aligned_decl_common (FILE *stream, tree decl,
       const int xalign = (align) > 16 ? 16 : (align);
       fprintf ((stream), "\t.comm\t");
       assemble_name ((stream), (name));
-      fprintf ((stream), ", %d\t# %d\n",
+      fprintf ((stream), ", %lld\t# %lld\n",
 	       (((size) + xalign - 1) / xalign) * xalign,
                (size));
   }
@@ -683,9 +683,10 @@ void
 i386_emx_file_end (void)
 {
   dfprintf ((stderr, "trace: emx_file_end\n"));
-  struct extern_list *p;
 
 #if 0 /* don't think we need this */
+  struct extern_list *p;
+
   for (p = extern_head; p != NULL; p = p->next)
     {
       tree decl;

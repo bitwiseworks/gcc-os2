@@ -25,39 +25,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "gcc.h"
 #include "opts.h"
 
-#define EMX_INITIALIZE_ENVIRONMENT(taildirs)                                   \
-  /* Set env.vars GCC_ROOT, G++_ROOT and BINUTILS_ROOT.  */                    \
-  {                                                                            \
-  int fGCC = !getenv ("GCC_ROOT");                                             \
-  int fGPP = !getenv ("G++_ROOT");                                             \
-  int fBIN = !getenv ("BINUTILS_ROOT");                                        \
-  if (fGCC || fGPP || fBIN)                                                    \
-    {                                                                          \
-      char root_path [260];                                                    \
-      if (!_execname (root_path, sizeof (root_path)))                          \
-      {                                                                        \
-        int i;                                                                 \
-        for (i = 0; i < taildirs; i++)                                         \
-          {                                                                    \
-            char *name = _getname (root_path);                                 \
-            if (name > root_path)                                              \
-              {                                                                \
-                if (i < taildirs - 1)                                          \
-                  name--;                                                      \
-                if (*name != ':')                                              \
-                  *name = '\0';                                                \
-              }                                                                \
-          }                                                                    \
-        if (fGCC)                                                              \
-          setenv ("GCC_ROOT", root_path, 1);                                   \
-        if (fGPP)                                                              \
-          setenv ("G++_ROOT", root_path, 1);                                   \
-        if (fGCC)                                                              \
-          setenv ("BINUTILS_ROOT", root_path, 1);                              \
-      }                                                                        \
-    }                                                                          \
-  }
-
 /* emxomf does not understand stabs+, so for frontends we have to
    switch to standard stabs if -Zomf is used. We also do many other
    argv preprocessing here. */
@@ -66,15 +33,14 @@ void
 emx_driver_init (unsigned int *decoded_options_count,
 		    struct cl_decoded_option **decoded_options)
 {
-    int new_argc, max_argc;
-    const char **new_argv;
-    _emxload_env ("GCCLOAD");
-#if 0
-    _envargs (&argc, (char ***)&argv, "GCCOPT");
-    _response (&argc, (char ***)&argv);
-    _wildcard (&argc, (char ***)&argv);
-#endif
     unsigned int i;
+
+    /* Preload compiler if specified by GCCLOAD for faster subsequent runs */
+    _emxload_env ("GCCLOAD");
+    /* Compilers don't fork (thanks God!) so we can use >32MB RAM */ 
+    /* bird: this doesn't matter really as the compiler now should use high */
+    /*       memory. But we'll leave it here in case a DLL gets broken. */
+    _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);
 
   for (i = 1; i < *decoded_options_count; i++)
     {
@@ -104,15 +70,3 @@ emx_driver_init (unsigned int *decoded_options_count,
 	}
     }
 }
-
-/* Do some OS/2-specific work upon initialization of all compilers */
-#define COMPILER_HOST_INITIALIZATION                                           \
-  {                                                                            \
-    /* Preload compiler if specified by GCCLOAD for faster subsequent runs */  \
-    _emxload_env ("GCCLOAD");                                                  \
-    /* Compilers don't fork (thanks God!) so we can use >32MB RAM */           \
-    /* bird: this doesn't matter really as the compiler now should use high */ \
-    /*       memory. But we'll leave it here in case a DLL gets broken. */     \
-    _uflags (_UF_SBRK_MODEL, _UF_SBRK_ARBITRARY);                              \
-    EMX_INITIALIZE_ENVIRONMENT(5)                                              \
-  }

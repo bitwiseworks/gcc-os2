@@ -1981,13 +1981,8 @@ i*86-pc-*emx)		# i?86 running OS/2
 	extra_gcc_objs="emx-driver.o"
 	extra_options="${extra_options} i386/emx.opt"
 	cxx_target_objs="${cxx_target_objs} emx-cxx.o"
-	xm_defines="USG BSTRING NO_SYS_SIGLIST"
 	exeext=.exe
 	tmake_file=i386/t-emx
-    # r=bird: why do we do this??
-	target_alias=${host}
-    # r=bird: and this??
-	CFLAGS="-Zstack 1024 -Zcrtdll"
 	if test x$enable_threads = xyes; then
 		thread_file=os2
 	fi

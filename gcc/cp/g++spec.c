@@ -54,12 +54,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef LIBSTDCXX_STATIC
 #define LIBSTDCXX_STATIC NULL
 #endif
-#ifdef LIBSTDCXX_STATIC                                                             /* bird */
-#define LIBSTDCXX_STATIC "-lstdc++"                                                 /* bird */
-#endif                                                                              /* bird */
-#ifdef LIBSTDCXX_PROFILE_STATIC                                                     /* bird */
-#define LIBSTDCXX_PROFILE_STATIC "-lstdc++"                                         /* bird */
-#endif                                                                              /* bird */
 
 void
 lang_specific_driver (struct cl_decoded_option **in_decoded_options,
