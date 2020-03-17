@@ -33,4 +33,7 @@
 // System-specific #define, typedefs, corrections, etc, go here.  This
 // file will come before all others.
 
+// We have ctype::do_is and do_scan* specialised in ctype_inline.h.
+#define _GLIBCXX_CTYPE_WCHAR_T_DO_IS_DEFINED 1
+
 #endif

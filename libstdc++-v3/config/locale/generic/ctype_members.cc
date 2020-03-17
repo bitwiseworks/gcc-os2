@@ -133,6 +133,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     return __hi;
   }
 
+#ifndef _GLIBCXX_CTYPE_WCHAR_T_DO_IS_DEFINED
   bool
   ctype<wchar_t>::
   do_is(mask __m, char_type __c) const
@@ -186,6 +187,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       ++__lo;
     return __lo;
   }
+#endif //  _GLIBCXX_CTYPE_WCHAR_T_DO_IS_DEFINED
 
   wchar_t
   ctype<wchar_t>::
@@ -204,6 +206,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
     return __hi;
   }
+
+#if defined(__WCHAR_MIN__) && __WCHAR_MIN__ == 0
+// Disable wc >= 0 warnings for unsigned wchar_t.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
 
   char
   ctype<wchar_t>::
@@ -243,6 +251,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
     return __hi;
   }
+
+#if defined(__WCHAR_MIN__) && __WCHAR_MIN__ == 0
+#pragma GCC diagnostic pop
+#endif
 
   void
   ctype<wchar_t>::_M_initialize_ctype() throw()
