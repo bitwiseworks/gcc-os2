@@ -4,6 +4,17 @@ History of changes for GCC for OS/2
 This file contains OS/2-specific changes to GCC that are not part of upstream
 and its ChangeLog.
 
+9.2.0 OS/2 Beta 2 (2020-03-27)
+------------------------------
+
+-   OS/2: Fix upstream regression in response file processing [#14].
+
+-   OS/2: Define wint_t to be signed int [#16].
+
+-   Build against new LIBCn with full wide character supoprt to enable wchar_t
+    specializations in C++ including supoprt for wide char I/O (wcout etc.),
+    wregex etc. [#16].
+
 9.2.0 OS/2 Beta 1 (2020-01-14)
 ------------------------------
 
