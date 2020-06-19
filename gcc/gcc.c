@@ -5716,17 +5716,15 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 	    /* We are going to expand `%o' into `@FILE', where FILE
 	       is a newly-created temporary filename.  The filenames
 	       that would usually be expanded in place of %o will be
-	       written to the temporary file.  Note that we don't do
-	       that for non-GNU linkers as they may be not compatible
-	       with libiberty's response files (e.g. EMX OMF linker).  */
-	    if (HAVE_GNU_LD && at_file_supplied)
+	       written to the temporary file.  */
+	    if (at_file_supplied)
 	      open_at_file ();
 
 	    for (i = 0; i < n_infiles + lang_specific_extra_outfiles; i++)
 	      if (outfiles[i])
 		store_arg (outfiles[i], 0, 0);
 
-	    if (HAVE_GNU_LD && at_file_supplied)
+	    if (at_file_supplied)
 	      close_at_file ();
 	    break;
 
@@ -7405,13 +7403,22 @@ driver::set_progname (const char *argv0) const
 void
 driver::expand_at_files (int *argc, char ***argv) const
 {
+#ifndef __EMX__
   char **old_argv = *argv;
+#endif
 
   expandargv (argc, argv);
 
+  /* NOTE: Do NOT set at_file_supplied on EMX to ensure that GCC
+     never creates response files for child processes. Libiberty's
+     `pex_run_in_environment` will create response files on its own
+     when needed on EMX (see pex-djgpp.c) and doing it here would
+     lead to nested response files which are not supported.  */
+#ifndef __EMX__
   /* Determine if any expansions were made.  */
   if (*argv != old_argv)
     at_file_supplied = true;
+#endif
 }
 
 /* Decode the command-line arguments from argc/argv into the
