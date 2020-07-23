@@ -4,6 +4,12 @@ History of changes for GCC for OS/2
 This file contains OS/2-specific changes to GCC that are not part of upstream
 and its ChangeLog.
 
+9.2.0 OS/2 Beta 3 (2020-07-23)
+------------------------------
+
+-   gcc: Avoid nested response file usage on EMX [#14].
+
+
 9.2.0 OS/2 Beta 2 (2020-03-27)
 ------------------------------
 
