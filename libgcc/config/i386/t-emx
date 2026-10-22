@@ -58,6 +58,10 @@ TARGET_LIBGCC2_CFLAGS = -Zaout -O2 -fomit-frame-pointer -Wall -DNDEBUG
 LIB1ASMSRC = i386/emx.S
 LIB1ASMFUNCS = _alloca _chkstk_ms
 
+# libc startup objects provide __CTOR_LIST__ and __DTOR_LIST__.
+# Exclude libgcc's fallback definitions, which conflict with -fno-common.
+LIB2FUNCS_EXCLUDE += _ctors
+
 # Extra functions to add to libgcc.
 LIB2FUNCS_EXTRA = $(srcdir)/config/i386/emx-ctordtor.c
 LIB2ADDEH       = \

@@ -65,9 +65,6 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_EXECUTABLE_SUFFIX        ".exe"
 #define NO_FORCE_EXEOBJ_SUFFIX
 
-/* Don't provide default values for __CTOR_LIST__ and __DTOR_LIST__ in libgcc */
-#define CTOR_LISTS_DEFINED_EXTERNALLY
-
 /* We support weak symbols (in the limited way OS/2 supports them).
    This also enables #pragma weak handling.  */
 #define SUPPORTS_WEAK                   1
