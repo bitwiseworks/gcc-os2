@@ -6,6 +6,15 @@
 # The version of GCC in this tree
 gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
 
+ifdef LT_BUILDLEVEL
+# RPM build
+gcc_desc := $(LT_BUILDLEVEL)@@GNU GCC Runtime
+else
+# Test build
+gcc_desc := GNU GCC Runtime $(gcc_version) \
+		(test build $(shell LANG=C date -u +'%Y-%m-%d %T') @$(HOSTNAME))
+endif
+
 # DLL version string.
 SHLIB_EXT = .dll
 SHLIB_SOVERSION = 1
@@ -13,7 +22,7 @@ SHLIB_MKMAP = $(srcdir)/mkmap-flat.awk
 SHLIB_MAPFILES = libgcc-std.ver $(srcdir)/config/i386/libgcc-glibc.ver
 SHLIB_MAPFILES += $(srcdir)/config/i386/libgcc-emx.ver
 SHLIB_MKMAP_OPTS = -v pe_dll=gcc$(SHLIB_SOVERSION) -v leading_underscore=1 \
-		-v pe_def="GNU GCC Runtime Version $(gcc_version)-$(RPM_PACKAGE_RELEASE)"
+		-v pe_def="$(gcc_desc)"
 
 # The OS/2 target have shared libgcc, but the names are release specific and constrained by 8.3 limits.
 SHLIB_BASENAME  = gcc$(SHLIB_SOVERSION)
