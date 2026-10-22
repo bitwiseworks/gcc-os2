@@ -50,9 +50,8 @@ SHLIB_INSTALL   = $$(INSTALL_DATA) $(SHLIB_SUBDIR)/$(SHLIB_DLLNAME) $$(DESTDIR)$
 USE_COLLECT2    =
 # Don't run fixproto
 STMP_FIXPROTO   =
-## Don't fix includes
-# bird 2005-12-18: Yes we do, it'll prevent syslimits.h from getting in place otherwise.
-##STMP_FIXINC     =
+# Keep STMP_FIXINC enabled so syslimits.h is installed. mkfixinc.sh selects a no-op fixer for this
+# target, avoiding private copies of system headers.
 
 # Override libgcc2 C flags to ensure stack probing and epilogues.
 TARGET_LIBGCC2_CFLAGS = -Zaout -O2 -fomit-frame-pointer -Wall -DNDEBUG
