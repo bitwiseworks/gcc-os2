@@ -65,6 +65,7 @@ relative prefix can be found, return @code{NULL}.
 
 #include "ansidecl.h"
 #include "libiberty.h"
+#include "filenames.h"
 
 #ifndef R_OK
 #define R_OK 4
@@ -78,22 +79,11 @@ relative prefix can be found, return @code{NULL}.
 
 #if defined (_WIN32) || defined (__MSDOS__) \
     || defined (__DJGPP__) || defined (__OS2__) || defined (__EMX__)
-#  define HAVE_DOS_BASED_FILE_SYSTEM
 #  define HAVE_HOST_EXECUTABLE_SUFFIX
 #  define HOST_EXECUTABLE_SUFFIX ".exe"
-#  ifndef DIR_SEPARATOR_2 
-#    define DIR_SEPARATOR_2 '\\'
-#  endif
 #  define PATH_SEPARATOR ';'
 #else
 #  define PATH_SEPARATOR ':'
-#endif
-
-#ifndef DIR_SEPARATOR_2
-#  define IS_DIR_SEPARATOR(ch) ((ch) == DIR_SEPARATOR)
-#else
-#  define IS_DIR_SEPARATOR(ch) \
-	(((ch) == DIR_SEPARATOR) || ((ch) == DIR_SEPARATOR_2))
 #endif
 
 #define DIR_UP ".."
@@ -322,7 +312,32 @@ make_relative_prefix_1 (const char *progname, const char *bin_prefix,
   if (prog_dirs == NULL)
     goto bailout;
 
-  bin_dirs = split_directories (bin_prefix, &bin_num);
+  /* Canonicalize both sides of the installation-location comparison.
+     Keep BIN_PREFIX unchanged for the relocation calculation below.  */
+  if (resolve_links)
+    {
+      char *full_bin_prefix = lrealpath (bin_prefix);
+      char *dir_prefix;
+      size_t len;
+      if (full_bin_prefix == NULL)
+	goto bailout;
+      /* split_directories retains separators in each component.  Match
+         the directory components of PROGNAME even if lrealpath removed
+         the trailing separator from BIN_PREFIX.  */
+      len = strlen (full_bin_prefix);
+      dir_prefix = (char *) malloc (len + 2);
+      if (dir_prefix != NULL)
+	{
+	  memcpy (dir_prefix, full_bin_prefix, len);
+	  dir_prefix[len] = DIR_SEPARATOR;
+	  dir_prefix[len + 1] = '\0';
+	  bin_dirs = split_directories (dir_prefix, &bin_num);
+	  free (dir_prefix);
+	}
+      free (full_bin_prefix);
+    }
+  else
+    bin_dirs = split_directories (bin_prefix, &bin_num);
   if (bin_dirs == NULL)
     goto bailout;
 
@@ -337,11 +352,23 @@ make_relative_prefix_1 (const char *progname, const char *bin_prefix,
     {
       for (i = 0; i < bin_num; i++)
 	{
-	  if (strcmp (prog_dirs[i], bin_dirs[i]) != 0)
+	  if (filename_cmp (prog_dirs[i], bin_dirs[i]) != 0)
 	    break;
 	}
 
       if (prog_num <= 0 || i == bin_num)
+	goto bailout;
+    }
+
+  /* Restore the original BIN_PREFIX before comparing it with the
+     uncanonicalized PREFIX.  Mixing canonical and configured paths could
+     hide their common prefix, while resolving symlinks could change the
+     configured directory layout.  */
+  if (resolve_links)
+    {
+      free_split_directories (bin_dirs);
+      bin_dirs = split_directories (bin_prefix, &bin_num);
+      if (bin_dirs == NULL)
 	goto bailout;
     }
 
@@ -353,7 +380,7 @@ make_relative_prefix_1 (const char *progname, const char *bin_prefix,
   n = (prefix_num < bin_num) ? prefix_num : bin_num;
   for (common = 0; common < n; common++)
     {
-      if (strcmp (bin_dirs[common], prefix_dirs[common]) != 0)
+      if (filename_cmp (bin_dirs[common], prefix_dirs[common]) != 0)
 	break;
     }
 
